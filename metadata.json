@@ -1,0 +1,6 @@
+{
+  "name": "OmniSaaS - Personal & Business OS",
+  "description": "A high-performance, responsive, all-in-one Life & Business management SaaS platform designed for Supabase (PostgreSQL), Stripe, and OpenAI, featuring habits, health, CRM, inventory, HR payroll, and finances.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
