@@ -13,6 +13,9 @@ import Stripe from "stripe";
 
 dotenv.config();
 
+console.log("Environment:", process.env.NODE_ENV);
+console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 const PORT = 3000;
 
@@ -400,6 +403,16 @@ const getStripeInstance = (): Stripe | null => {
 
 // 1. Stripe config check (available currencies, configuration status)
 app.get("/api/stripe/config", (req, res) => {
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({
+      success: false,
+      error: "Missing STRIPE_SECRET_KEY environment variable."
+    });
+  }
+
   const isConfigured = !!process.env.STRIPE_SECRET_KEY;
   res.json({
     success: true,
@@ -414,6 +427,16 @@ app.get("/api/stripe/config", (req, res) => {
 
 // 2. Create Checkout Session based on language/country detected
 app.post("/api/stripe/create-checkout-session", async (req, res) => {
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({
+      success: false,
+      error: "Missing STRIPE_SECRET_KEY environment variable."
+    });
+  }
+
   const stripe = getStripeInstance();
   const { lang } = req.body; // 'pt' | 'es' | 'en'
   
@@ -434,7 +457,7 @@ app.post("/api/stripe/create-checkout-session", async (req, res) => {
     currency = "EUR";
     unitAmount = 1999; // 19.99 in cents
     priceId = process.env.STRIPE_PRICE_EUR || "";
-    productName = "Licencia del Espacio de Trabajo Premium OmniSaaS";
+    productName = "Licencia del Espacio de Trabalho Premium OmniSaaS";
     productDesc = "Acceso completo de por vida a OmniSaaS: finanzas, hábitos, objetivos y Copiloto de IA.";
   }
 
@@ -447,19 +470,10 @@ app.post("/api/stripe/create-checkout-session", async (req, res) => {
   const successUrl = `${hostUrl}/?payment=success&lang=${lang || 'en'}`;
   const cancelUrl = `${hostUrl}/?payment=cancel&lang=${lang || 'en'}`;
 
-  // If Stripe is NOT configured, we'll inform the frontend to run in fallback / simulated mode.
   if (!stripe) {
-    return res.json({
+    return res.status(500).json({
       success: false,
-      isConfigured: false,
-      message: "Stripe não configurado no servidor. Iniciando Checkout em Modo Simulado.",
-      simulationData: {
-        currency,
-        amount: unitAmount / 100,
-        productName,
-        productDesc,
-        successUrl
-      }
+      error: "Missing STRIPE_SECRET_KEY environment variable."
     });
   }
 
