@@ -118,29 +118,16 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
       });
       
       const contentType = res.headers.get('content-type');
-      if (!res.ok || !contentType || !contentType.includes('application/json')) {
-        if (isProduction) {
-          onShowNotification(
-            t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-            language === 'pt' 
-              ? 'Erro ao iniciar checkout seguro do Stripe. Por favor, tente novamente mais tarde.' 
-              : 'Error starting secure Stripe checkout. Please try again later.',
-            'warning'
-          );
-        } else {
-          setShowSimulationForm(true);
-          onShowNotification(
-            t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-            t('stripeTestModeDisclaimer', 'Iniciando simulador local de pagamento devido a credenciais ou rotas pendentes no servidor de produção.'),
-            'info'
-          );
+      let data: any = null;
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          console.error("Error parsing response JSON:", jsonErr);
         }
-        return;
       }
-
-      const data = await res.json();
-
-      if (data.success && data.checkoutUrl) {
+      
+      if (res.ok && data && data.success && data.checkoutUrl) {
         // Redireciona para o checkout real da Stripe
         onShowNotification('Stripe Checkout', 'Redirecionando para página de pagamento seguro...', 'info');
         
@@ -156,10 +143,12 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           window.location.href = data.checkoutUrl;
         }
       } else {
+        const errorMsg = data?.error || data?.message || (language === 'pt' ? 'Erro ao iniciar o checkout seguro do Stripe.' : 'Error starting secure Stripe checkout.');
+        
         if (isProduction) {
           onShowNotification(
             t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-            data.error || (language === 'pt' ? 'Serviço do Stripe temporariamente indisponível. Entre em contato com o suporte.' : 'Stripe service temporarily unavailable. Please contact support.'),
+            errorMsg,
             'warning'
           );
         } else {
@@ -167,7 +156,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           setShowSimulationForm(true);
           onShowNotification(
             t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-            t('stripeTestModeDisclaimer', 'Iniciando simulador local de pagamento devido a credenciais pendentes.'),
+            `${errorMsg} (Modo Teste/Desenvolvimento)`,
             'info'
           );
         }
