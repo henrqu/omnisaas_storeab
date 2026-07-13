@@ -105,6 +105,11 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
 
   const handleCheckoutSubmit = async () => {
     setIsCreatingSession(true);
+    
+    const isProduction = window.location.hostname !== 'localhost' && 
+                         window.location.hostname !== '127.0.0.1' && 
+                         !window.location.hostname.includes('run.app');
+
     try {
       const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
@@ -114,12 +119,22 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
       
       const contentType = res.headers.get('content-type');
       if (!res.ok || !contentType || !contentType.includes('application/json')) {
-        setShowSimulationForm(true);
-        onShowNotification(
-          t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-          t('stripeTestModeDisclaimer', 'Iniciando simulador local de pagamento devido a credenciais ou rotas pendentes no servidor de produção.'),
-          'info'
-        );
+        if (isProduction) {
+          onShowNotification(
+            t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
+            language === 'pt' 
+              ? 'Erro ao iniciar checkout seguro do Stripe. Por favor, tente novamente mais tarde.' 
+              : 'Error starting secure Stripe checkout. Please try again later.',
+            'warning'
+          );
+        } else {
+          setShowSimulationForm(true);
+          onShowNotification(
+            t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
+            t('stripeTestModeDisclaimer', 'Iniciando simulador local de pagamento devido a credenciais ou rotas pendentes no servidor de produção.'),
+            'info'
+          );
+        }
         return;
       }
 
@@ -141,22 +156,40 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           window.location.href = data.checkoutUrl;
         }
       } else {
-        // Se a Stripe não estiver configurada no servidor, abrir simulador local de pagamento
+        if (isProduction) {
+          onShowNotification(
+            t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
+            data.error || (language === 'pt' ? 'Serviço do Stripe temporariamente indisponível. Entre em contato com o suporte.' : 'Stripe service temporarily unavailable. Please contact support.'),
+            'warning'
+          );
+        } else {
+          // Se a Stripe não estiver configurada no servidor, abrir simulador local de pagamento
+          setShowSimulationForm(true);
+          onShowNotification(
+            t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
+            t('stripeTestModeDisclaimer', 'Iniciando simulador local de pagamento devido a credenciais pendentes.'),
+            'info'
+          );
+        }
+      }
+    } catch (err: any) {
+      if (isProduction) {
+        onShowNotification(
+          t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
+          language === 'pt' 
+            ? 'Falha de conexão com o servidor de pagamento. Certifique-se de que a variável STRIPE_SECRET_KEY foi adicionada no Vercel.' 
+            : 'Connection failure with the payment server. Verify that STRIPE_SECRET_KEY is configured in Vercel.',
+          'warning'
+        );
+      } else {
+        // In case of any network/parsing failure, show the simulation form so they are not blocked!
         setShowSimulationForm(true);
         onShowNotification(
           t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-          t('stripeTestModeDisclaimer', 'Iniciando simulador local de pagamento devido a credenciais pendentes.'),
+          'Iniciando simulador local de pagamento em modo de compatibilidade offline.',
           'info'
         );
       }
-    } catch (err: any) {
-      // In case of any network/parsing failure, show the simulation form so they are not blocked!
-      setShowSimulationForm(true);
-      onShowNotification(
-        t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-        'Iniciando simulador local de pagamento em modo de compatibilidade offline.',
-        'info'
-      );
     } finally {
       setIsCreatingSession(false);
     }
