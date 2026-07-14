@@ -23,7 +23,9 @@ import {
   Heart,
   Briefcase,
   Users,
-  ShoppingCart
+  ShoppingCart,
+  Printer,
+  Download
 } from 'lucide-react';
 import { useLanguageTheme, formatCurrency } from '../utils/i18n';
 
@@ -426,22 +428,68 @@ export default function PaycheckPlannerView() {
 
   const safeSpendingLimit = calculateSafeSpendingLimit();
 
-  // AI Suggestions generator function
-  const triggerAiPlannerSuggestion = () => {
+  // AI Suggestions generator function using server-side OpenAI /api/chat proxy
+  const triggerAiPlannerSuggestion = async () => {
     setIsAiLoading(true);
-    setTimeout(() => {
-      const parsedAmount = parseFloat(aiPaycheckAmount) || 2500;
-      
-      // Calculate split values based on customized split percentages
-      const suggestedHousing = Math.round(parsedAmount * 0.30);
-      const suggestedBills = Math.round(parsedAmount * 0.12);
-      const suggestedFood = Math.round(parsedAmount * 0.14);
-      const suggestedSavings = Math.round(parsedAmount * (splitPercent.savings / 100));
-      const suggestedInvestments = Math.round(parsedAmount * (splitPercent.investments / 100));
-      const suggestedFun = Math.round(parsedAmount * (splitPercent.wants / 100));
-      const totalAllocated = suggestedHousing + suggestedBills + suggestedFood + suggestedSavings + suggestedInvestments + suggestedFun;
-      const remaining = Math.max(0, parsedAmount - totalAllocated);
+    const parsedAmount = parseFloat(aiPaycheckAmount) || 2500;
+    
+    // Calculate split values based on customized split percentages
+    const suggestedHousing = Math.round(parsedAmount * 0.30);
+    const suggestedBills = Math.round(parsedAmount * 0.12);
+    const suggestedFood = Math.round(parsedAmount * 0.14);
+    const suggestedSavings = Math.round(parsedAmount * (splitPercent.savings / 100));
+    const suggestedInvestments = Math.round(parsedAmount * (splitPercent.investments / 100));
+    const suggestedFun = Math.round(parsedAmount * (splitPercent.wants / 100));
+    const totalAllocated = suggestedHousing + suggestedBills + suggestedFood + suggestedSavings + suggestedInvestments + suggestedFun;
+    const remaining = Math.max(0, parsedAmount - totalAllocated);
 
+    try {
+      const promptText = `
+        Por favor, analise a seguinte simulação de salário e gere uma recomendação financeira curta, direta e motivadora para o usuário.
+        
+        VALORES DA SIMULAÇÃO:
+        - Salário (Paycheck): ${formatCurrency(parsedAmount, language)}
+        - Moradia sugerida (Housing): ${formatCurrency(suggestedHousing, language)}
+        - Contas essenciais (Bills): ${formatCurrency(suggestedBills, language)}
+        - Alimentação (Food): ${formatCurrency(suggestedFood, language)}
+        - Reserva de Poupança (${splitPercent.savings}%): ${formatCurrency(suggestedSavings, language)}
+        - Investimentos (${splitPercent.investments}%): ${formatCurrency(suggestedInvestments, language)}
+        - Lazer/Desejos (${splitPercent.wants}%): ${formatCurrency(suggestedFun, language)}
+        - Sobra livre (Remaining): ${formatCurrency(remaining, language)}
+        - Pontuação de Saúde Financeira: ${financialHealthScore}/100
+
+        Escreva de forma consultiva e encorajadora em 2 ou 3 frases, destacando se a proporção de gastos está saudável e indicando o melhor próximo passo financeiro de forma prática.
+        Idioma de resposta: ${language === 'pt' ? 'Português Brasileiro (pt-BR)' : 'Inglês (en-US)'}.
+      `;
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          systemInstruction: "Você é o Planejador Vesta AI. Faça análises curtas, extremamente estratégicas e encorajadoras sobre a distribuição de salários de seus usuários."
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.response) {
+        setAiSuggestion({
+          housing: suggestedHousing,
+          bills: suggestedBills,
+          food: suggestedFood,
+          savings: suggestedSavings,
+          investments: suggestedInvestments,
+          fun: suggestedFun,
+          remaining: remaining,
+          tips: data.response
+        });
+      } else {
+        throw new Error('AI response was not successful');
+      }
+    } catch (err) {
+      console.warn("Falling back to local simulation due to exception:", err);
       setAiSuggestion({
         housing: suggestedHousing,
         bills: suggestedBills,
@@ -451,11 +499,38 @@ export default function PaycheckPlannerView() {
         fun: suggestedFun,
         remaining: remaining,
         tips: language === 'pt' 
-          ? `Sua pontuação de saúde financeira é ${financialHealthScore}/100. Com base nisso, recomendo priorizar a Poupança de Emergência caso ainda não tenha 3 a 6 meses de custos garantidos. Seu teto de gastos essenciais está bem equilibrado.`
-          : `Your financial health score is ${financialHealthScore}/100. Based on this profile, we recommend prioritizing your Emergency Fund if you do not have 3 to 6 months of basic living expenses covered. Your Needs are well within safe thresholds.`
+          ? `[Vesta AI Redundante] Sua pontuação de saúde financeira é de ${financialHealthScore}/100. Recomendamos alocar ${formatCurrency(suggestedSavings, language)} para poupança emergencial, mantendo os custos de moradia abaixo de 30% do seu salário total.`
+          : `[Vesta AI Redundant] Your financial health score is ${financialHealthScore}/100. We recommend allocating ${formatCurrency(suggestedSavings, language)} for emergency savings, keeping housing expenses below 30% of your total paycheck.`
       });
+    } finally {
       setIsAiLoading(false);
-    }, 800);
+    }
+  };
+
+  // Export spreadsheet data as CSV
+  const handleExportCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // UTF-8 BOM
+    csvContent += "Categoria,Item,Orcado,Realizado\n";
+    
+    sections.forEach(sec => {
+      const sectionName = language === 'pt' ? sec.titlePt : sec.title;
+      sec.items.forEach(item => {
+        csvContent += `"${sectionName}","${item.name}",${item.budgeted},${item.actual}\n`;
+      });
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `paycheck_planner_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Print spreadsheet
+  const handlePrint = () => {
+    window.print();
   };
 
   // Reset spreadsheet to default
@@ -483,7 +558,23 @@ export default function PaycheckPlannerView() {
               : 'Organize every paycheck, split needs automatically, and track your financial milestones with built-in financial artificial intelligence.'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 no-print">
+          <button
+            onClick={handleExportCSV}
+            className="px-3 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5"
+            title={language === 'pt' ? 'Exportar planilha para CSV' : 'Export spreadsheet to CSV'}
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>{language === 'pt' ? 'Exportar CSV' : 'Export CSV'}</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="px-3 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5"
+            title={language === 'pt' ? 'Imprimir orçamento' : 'Print layout'}
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>{language === 'pt' ? 'Imprimir' : 'Print'}</span>
+          </button>
           <button
             onClick={handleResetSpreadsheet}
             className="px-3 py-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition cursor-pointer"

@@ -29,6 +29,7 @@ import { LocalDatabase } from '../utils/db';
 import { Transaction, Budget } from '../types/schema';
 import { useLanguageTheme, formatCurrency } from '../utils/i18n';
 import PaycheckPlannerView from './PaycheckPlannerView';
+import CategoryDashboard from './CategoryDashboard';
 
 interface FinanceViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
@@ -594,6 +595,10 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
   const [bgPeriod, setBgPeriod] = useState('2026-07');
   const [bgError, setBgError] = useState('');
 
+  // Selected category dashboard states
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedBudgetLimit, setSelectedBudgetLimit] = useState<number>(0);
+
   // Categories list
   const incomeCategories = ['Vendas SaaS', 'Consultorias', 'Aportes', 'Outros'];
   const expenseCategories = ['Infraestrutura', 'Ferramentas IA', 'Marketing', 'Alimentação', 'Folha de Pagamento', 'Escritório', 'Impostos', 'Outros'];
@@ -674,6 +679,26 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
     const updated = LocalDatabase.deleteBudget(id);
     setBudgets(updated);
     onShowNotification('Orçamento Excluído', `Teto limite para "${category}" removido do controle corporativo.`, 'info');
+  };
+
+  const handleCategoryAddTransaction = (tx: Omit<Transaction, 'id' | 'user_id'>) => {
+    LocalDatabase.addTransaction(tx);
+    setTransactions(LocalDatabase.getTransactions());
+    setBudgets(LocalDatabase.getBudgets());
+    onShowNotification(
+      'Lançamento Registrado', 
+      `${tx.type === 'income' ? 'Receita' : 'Despesa'} de R$ ${tx.amount.toFixed(2)} adicionada a ${tx.category}.`, 
+      'success'
+    );
+  };
+
+  const handleCategoryDeleteTransaction = (id: string) => {
+    const tx = transactions.find(t => t.id === id);
+    const amount = tx ? tx.amount : 0;
+    const updated = LocalDatabase.deleteTransaction(id);
+    setTransactions(updated);
+    setBudgets(LocalDatabase.getBudgets());
+    onShowNotification('Lançamento Removido', `O registro de R$ ${amount.toFixed(2)} foi removido com sucesso.`, 'info');
   };
 
   // Summaries calculation
@@ -945,128 +970,156 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
 
       {/* VIEW 2: BUDGETS */}
       {activeTab === 'budgets' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6" id="panel-budgets">
-          
-          {/* Adicionar Orçamento Form */}
-          <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 h-fit" id="budget-form-panel">
-            <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
-              <PiggyBank className="w-4 h-4 mr-1.5 text-indigo-400" />
-              Estipular Limite por Categoria
-            </h3>
+        selectedCategory ? (
+          <CategoryDashboard
+            category={selectedCategory}
+            budgetLimit={selectedBudgetLimit}
+            transactions={transactions}
+            onBack={() => setSelectedCategory(null)}
+            onAddTransaction={handleCategoryAddTransaction}
+            onDeleteTransaction={handleCategoryDeleteTransaction}
+          />
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6" id="panel-budgets">
+            
+            {/* Adicionar Orçamento Form */}
+            <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 h-fit" id="budget-form-panel">
+              <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
+                <PiggyBank className="w-4 h-4 mr-1.5 text-indigo-400" />
+                Estipular Limite por Categoria
+              </h3>
 
-            <form onSubmit={handleAddBudget} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Categoria de Custo</label>
-                <select 
-                  value={bgCategory} onChange={(e) => setBgCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                >
-                  {expenseCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <form onSubmit={handleAddBudget} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Categoria de Custo</label>
+                  <select 
+                    value={bgCategory} onChange={(e) => setBgCategory(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  >
+                    {expenseCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Teto Máximo de Gastos (R$)</label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">R$</span>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Teto Máximo de Gastos (R$)</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">R$</span>
+                    <input 
+                      type="number" placeholder="2500"
+                      value={bgLimit} onChange={(e) => setBgLimit(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Período / Competência</label>
                   <input 
-                    type="number" placeholder="2500"
-                    value={bgLimit} onChange={(e) => setBgLimit(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 font-mono"
+                    type="text" placeholder="2026-07"
+                    value={bgPeriod} onChange={(e) => setBgPeriod(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none font-mono"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Período / Competência</label>
-                <input 
-                  type="text" placeholder="2026-07"
-                  value={bgPeriod} onChange={(e) => setBgPeriod(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none font-mono"
-                />
-              </div>
+                <button 
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 rounded-xl transition"
+                  id="submit-budget-btn"
+                >
+                  Definir Teto Orçamentário
+                </button>
 
-              <button 
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 rounded-xl transition"
-                id="submit-budget-btn"
-              >
-                Definir Teto Orçamentário
-              </button>
-
-              {bgError && (
-                <p className="text-rose-400 text-xs flex items-center">
-                  <AlertTriangle className="w-3.5 h-3.5 mr-1" />
-                  {bgError}
-                </p>
-              )}
-            </form>
-          </div>
-
-          {/* Listagem de Orçamentos com Progress bar */}
-          <div className="xl:col-span-2 bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="budgets-ledger-panel">
-            <h2 className="text-sm font-bold text-white tracking-tight mb-4">Saúde dos Orçamentos Planejados</h2>
-            <div className="space-y-5 max-h-[500px] overflow-y-auto pr-1">
-              {budgets.map((b) => {
-                const percent = Math.min(100, (b.spent_amount / b.limit_amount) * 100);
-                const isOverBudget = b.spent_amount > b.limit_amount;
-                return (
-                  <div key={b.id} className="bg-slate-950/40 border border-slate-850 p-5 rounded-xl space-y-3 relative">
-                    <button 
-                      onClick={() => handleDeleteBudget(b.id, b.category)}
-                      className="absolute top-4 right-4 text-slate-500 hover:text-rose-400 p-1"
-                      title="Excluir orçamento"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{b.category}</h4>
-                        <span className="text-[10px] bg-slate-900 text-slate-500 border border-slate-800/80 px-2 py-0.5 rounded-full mt-1.5 inline-block font-mono">Período: {b.period}</span>
-                      </div>
-                      <div className="text-right pr-6">
-                        <span className="text-[10px] text-slate-500 block">Consumido</span>
-                        <span className={`font-bold text-sm ${isOverBudget ? 'text-rose-400 font-extrabold' : 'text-slate-300'}`}>
-                          R$ {b.spent_amount.toLocaleString('pt-BR')} / R$ {b.limit_amount.toLocaleString('pt-BR')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-1">
-                      <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-slate-850">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-1000 ${isOverBudget ? 'bg-rose-500' : percent >= 85 ? 'bg-amber-500' : 'bg-indigo-500'}`} 
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-slate-500">Utilização: {percent.toFixed(1)}%</span>
-                        {isOverBudget ? (
-                          <span className="text-rose-400 flex items-center font-bold">
-                            <AlertTriangle className="w-3.5 h-3.5 mr-0.5" />
-                            Teto Estourado!
-                          </span>
-                        ) : (
-                          <span className="text-emerald-400 flex items-center">
-                            <CheckCircle className="w-3.5 h-3.5 mr-0.5" />
-                            Dentro do limite
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {budgets.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-12">Nenhum orçamento mensal planejado.</p>
-              )}
+                {bgError && (
+                  <p className="text-rose-400 text-xs flex items-center">
+                    <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                    {bgError}
+                  </p>
+                )}
+              </form>
             </div>
-          </div>
 
-        </div>
+            {/* Listagem de Orçamentos com Progress bar */}
+            <div className="xl:col-span-2 bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="budgets-ledger-panel">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-sm font-bold text-white tracking-tight">Saúde dos Orçamentos Planejados</h2>
+                <span className="text-[10px] text-[#1E73BE] font-bold uppercase tracking-wider font-mono animate-pulse">Clique no cartão para o Dashboard</span>
+              </div>
+              <div className="space-y-5 max-h-[500px] overflow-y-auto pr-1">
+                {budgets.map((b) => {
+                  const percent = Math.min(100, (b.spent_amount / b.limit_amount) * 100);
+                  const isOverBudget = b.spent_amount > b.limit_amount;
+                  return (
+                    <div 
+                      key={b.id} 
+                      onClick={() => {
+                        setSelectedCategory(b.category);
+                        setSelectedBudgetLimit(b.limit_amount);
+                      }}
+                      className="bg-slate-950/40 border border-slate-850 p-5 rounded-xl space-y-3 relative cursor-pointer hover:bg-slate-900/60 hover:border-slate-700 transition-all duration-300 group"
+                    >
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteBudget(b.id, b.category);
+                        }}
+                        className="absolute top-4 right-4 text-slate-500 hover:text-rose-400 p-1 z-20"
+                        title="Excluir orçamento"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-bold text-white text-sm group-hover:text-blue-400 transition">{b.category}</h4>
+                          <span className="text-[10px] bg-slate-900 text-slate-500 border border-slate-800/80 px-2 py-0.5 rounded-full mt-1.5 inline-block font-mono">Período: {b.period}</span>
+                        </div>
+                        <div className="text-right pr-6">
+                          <span className="text-[10px] text-slate-500 block">Consumido</span>
+                          <span className={`font-bold text-sm ${isOverBudget ? 'text-rose-400 font-extrabold' : 'text-slate-300'}`}>
+                            R$ {b.spent_amount.toLocaleString('pt-BR')} / R$ {b.limit_amount.toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-slate-850">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-1000 ${isOverBudget ? 'bg-rose-500' : percent >= 85 ? 'bg-amber-500' : 'bg-indigo-500'}`} 
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-slate-500">Utilização: {percent.toFixed(1)}%</span>
+                          {isOverBudget ? (
+                            <span className="text-rose-400 flex items-center font-bold">
+                              <AlertTriangle className="w-3.5 h-3.5 mr-0.5" />
+                              Teto Estourado!
+                            </span>
+                          ) : (
+                            <span className="text-emerald-400 flex items-center">
+                              <CheckCircle className="w-3.5 h-3.5 mr-0.5" />
+                              Dentro do limite
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] text-[#1E73BE] opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-right font-bold font-mono">
+                        Visualizar Dashboard de Categoria →
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {budgets.length === 0 && (
+                  <p className="text-xs text-slate-500 text-center py-12">Nenhum orçamento mensal planejado.</p>
+                )}
+              </div>
+            </div>
+
+          </div>
+        )
       )}
 
       {/* VIEW 3: EXCEL BUDGET PLANNER */}

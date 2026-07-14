@@ -14,12 +14,14 @@ import {
 } from 'lucide-react';
 import { LocalDatabase } from '../utils/db';
 import { Profile, Subscription } from '../types/schema';
+import { useLanguageTheme, formatCurrency } from '../utils/i18n';
 
 interface SubscriptionProfileViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
 }
 
 export default function SubscriptionProfileView({ onShowNotification }: SubscriptionProfileViewProps) {
+  const { language, t } = useLanguageTheme();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sub, setSub] = useState<Subscription | null>(null);
 
@@ -105,8 +107,14 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
 
   // Helper to resolve monthly cost
   const getPlanMonthlyPrice = (tierName: string) => {
-    if (tierName === 'Pro Plan') return 59.90;
-    if (tierName === 'Enterprise') return 199.90;
+    if (tierName === 'Pro Plan' || tierName === 'Pro' || tierName === 'Vesta Pro') {
+      if (language === 'pt') return 59.90;
+      return 11.99;
+    }
+    if (tierName === 'Enterprise') {
+      if (language === 'pt') return 199.90;
+      return 39.99;
+    }
     return 0.00;
   };
 
@@ -118,12 +126,12 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
         <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="profile-card">
           <div className="flex items-center space-x-3 mb-5">
             <User className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-bold text-white tracking-tight">Segurança do Perfil de Usuário</h2>
+            <h2 className="text-sm font-bold text-white tracking-tight">{t('userProfileSecurity', 'Segurança do Perfil de Usuário')}</h2>
           </div>
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Nome de Exibição / Razão Social</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('displayNameLabel', 'Nome de Exibição / Razão Social')}</label>
               <input 
                 type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -131,7 +139,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Foto de Perfil (Carregar da Galeria)</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('profilePhotoLabel', 'Foto de Perfil (Carregar da Galeria)')}</label>
               <div className="flex items-center space-x-3 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
                 {avatar && (
                   <img 
@@ -163,7 +171,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">E-mail de Cadastro (Identificação)</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('emailLabel', 'E-mail de Cadastro (Identificação)')}</label>
               <input 
                 type="text" disabled value="admin@vestasolusoes.com.br"
                 className="w-full bg-slate-950/40 border border-slate-850/60 text-slate-500 rounded-xl px-3 py-2 text-xs focus:outline-none cursor-not-allowed"
@@ -174,7 +182,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2.5 rounded-xl transition"
             >
-              Atualizar Perfil
+              {t('updateProfileBtn', 'Atualizar Perfil')}
             </button>
           </form>
         </div>
@@ -183,12 +191,10 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
         <div className="bg-slate-900/10 border border-slate-850/65 rounded-2xl p-5 space-y-3">
           <div className="flex items-center space-x-1.5 text-emerald-400">
             <Shield className="w-4 h-4" />
-            <h4 className="text-xs font-bold uppercase tracking-wider">Multi-Tenant Row-Level Security</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider">{t('rlsTitle', 'Multi-Tenant Row-Level Security')}</h4>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Seus dados estão protegidos por RLS integrado em nosso banco de dados centralizado. Cada transação é filtrada pela cláusula SQL 
-            <code className="text-indigo-400 font-mono block mt-1 text-[10px] bg-slate-950/65 p-1 rounded">WHERE user_id = auth.uid()</code> 
-            para isolamento absoluto em ambiente de produção distribuído.
+            {t('rlsDesc', 'Seus dados estão protegidos por RLS integrado em nosso banco de dados centralizado. Cada transação é filtrada pela cláusula SQL WHERE user_id = auth.uid() para isolamento absoluto em ambiente de produção distribuído.')}
           </p>
         </div>
       </div>
@@ -199,21 +205,25 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
         {/* Status de Assinatura Ativo */}
         <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
-            <span className="text-slate-500 uppercase tracking-widest text-[9px] font-bold block">Assinatura Atual</span>
+            <span className="text-slate-500 uppercase tracking-widest text-[9px] font-bold block">{t('currentSubscription', 'Assinatura Atual')}</span>
             <div className="flex items-center space-x-2 mt-1">
               <Crown className="w-5 h-5 text-amber-400 fill-amber-400/15" />
-              <h2 className="text-lg font-bold text-white capitalize">{sub?.tier_name || 'Avaliação Grátis'}</h2>
+              <h2 className="text-lg font-bold text-white capitalize">
+                {sub?.tier_name === 'Pro Plan' || sub?.tier_name === 'Pro' || sub?.tier_name === 'Vesta Pro' ? t('proPlan', 'Plano Pro') : sub?.tier_name || t('freeTrial', 'Avaliação Grátis')}
+              </h2>
             </div>
-            <p className="text-xs text-slate-400 mt-1 font-medium">Sua conta corporativa está {sub?.status === 'active' ? 'ativa e adimplente' : 'em teste comercial/trial'}.</p>
+            <p className="text-xs text-slate-400 mt-1 font-medium">
+              {sub?.status === 'active' ? t('accountActiveDesc', 'Sua conta corporativa está ativa e adimplente.') : t('accountTrialDesc', 'Sua conta corporativa está em teste comercial/trial.')}
+            </p>
           </div>
 
           <div className="mt-4 md:mt-0 text-right bg-slate-950/60 p-4 rounded-xl border border-slate-850 flex items-center space-x-4">
             <div>
-              <span className="text-[10px] text-slate-500 block uppercase font-medium">Ciclo mensal</span>
-              <span className="text-emerald-400 font-bold text-lg">R$ {getPlanMonthlyPrice(sub?.tier_name || '').toFixed(2)}</span>
+              <span className="text-[10px] text-slate-500 block uppercase font-medium">{t('monthlyCycle', 'Ciclo mensal')}</span>
+              <span className="text-emerald-400 font-bold text-lg">{formatCurrency(getPlanMonthlyPrice(sub?.tier_name || ''), language)}</span>
             </div>
             <span className="bg-emerald-950/60 text-emerald-400 text-[10px] border border-emerald-900/30 px-2.5 py-1 rounded-full uppercase font-semibold">
-              Ativo
+              {t('activeStatus', 'Ativo')}
             </span>
           </div>
         </div>
@@ -222,89 +232,43 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
         <div>
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Opções de Upgrade do SaaS</h3>
-              <p className="text-slate-500 text-xs">Mude de plano em segundos. Testado pelo simulador de checkout Stripe.</p>
+              <h3 className="text-sm font-bold text-white">{t('saasUpgradeOptions', 'Opções de Upgrade do SaaS')}</h3>
+              <p className="text-slate-500 text-xs">{t('saasUpgradeDesc', 'Mude de plano em segundos. Testado pelo simulador de checkout Stripe.')}</p>
             </div>
             <div className="flex items-center space-x-1 text-slate-400 text-xs">
               <Lock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Checkout Seguro SSL</span>
+              <span>{t('secureCheckoutSsl', 'Checkout Seguro SSL')}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" id="plans-grid">
+          <div className="flex justify-center" id="plans-grid">
             
-            {/* Starter Plan */}
-            <div className={`border p-5 rounded-2xl flex flex-col justify-between transition bg-slate-950/20 ${sub?.tier_name === 'Free' ? 'border-indigo-500' : 'border-slate-850'}`}>
-              <div className="space-y-3">
-                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-full">Trial</span>
-                <div>
-                  <h4 className="text-sm font-bold text-white mt-1">Starter Trial</h4>
-                  <p className="text-slate-500 text-[11px] mt-0.5">Para fins de validação e testes simples do sistema.</p>
-                </div>
-                <div className="text-white text-xl font-bold">Grátis</div>
-                <ul className="text-[11px] text-slate-400 space-y-2 pt-2 border-t border-slate-900">
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> Dados limitados</li>
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> 1 Empresa ERP</li>
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> IA Copilot Limitado</li>
-                </ul>
-              </div>
-              <button 
-                onClick={() => handleSimulateStripeCheckout('free')}
-                disabled={isCheckoutLoading}
-                className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-semibold py-2 rounded-xl mt-6 transition disabled:opacity-50"
-              >
-                {sub?.tier_name === 'Free' ? 'Plano Ativo' : 'Selecionar'}
-              </button>
-            </div>
-
-            {/* Pro Plan */}
-            <div className={`border p-5 rounded-2xl flex flex-col justify-between transition bg-slate-950/20 relative overflow-hidden ${sub?.tier_name === 'Pro Plan' ? 'border-indigo-500' : 'border-slate-850'}`}>
+            {/* Pro Plan - ONLY ONE CARD SHOWING */}
+            <div className="border border-indigo-500 p-6 rounded-2xl flex flex-col justify-between transition bg-indigo-950/10 relative overflow-hidden max-w-md w-full shadow-lg shadow-indigo-500/5">
               <div className="absolute top-3 right-3 bg-indigo-900/50 text-indigo-300 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-indigo-700/50">
-                Popular
+                {t('popularBadge', 'Popular')}
               </div>
-              <div className="space-y-3">
-                <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider bg-indigo-950/40 border border-indigo-900 px-2 py-0.5 rounded-full">Profissional</span>
+              <div className="space-y-4">
+                <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider bg-indigo-950/40 border border-indigo-900 px-2 py-0.5 rounded-full">{t('professionalTier', 'Profissional')}</span>
                 <div>
-                  <h4 className="text-sm font-bold text-white mt-1">Vesta Pro</h4>
-                  <p className="text-slate-500 text-[11px] mt-0.5">Ideal para autônomos, investidores e consultórios.</p>
+                  <h4 className="text-base font-bold text-white mt-1">Vesta Pro</h4>
+                  <p className="text-slate-400 text-xs mt-1">{t('proPlanDesc', 'Ideal para autônomos, investidores e consultórios.')}</p>
                 </div>
-                <div className="text-white text-xl font-bold">R$ 59,90 <span className="text-xs text-slate-500">/mês</span></div>
-                <ul className="text-[11px] text-slate-400 space-y-2 pt-2 border-t border-slate-900">
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> CRM e Folhas Ilimitadas</li>
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> Alertas por E-mail</li>
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> Suporte VIP Prioritário</li>
+                <div className="text-white text-2xl font-black font-mono">
+                  {formatCurrency(getPlanMonthlyPrice('Pro Plan'), language)} <span className="text-xs text-slate-500 font-sans font-normal">/{language === 'pt' ? 'mês' : language === 'es' ? 'mes' : 'month'}</span>
+                </div>
+                <ul className="text-xs text-slate-300 space-y-2.5 pt-3 border-t border-slate-900">
+                  <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureCrm', 'CRM e Folhas Ilimitadas')}</li>
+                  <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureAlerts', 'Alertas por E-mail')}</li>
+                  <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureVip', 'Suporte VIP Prioritário')}</li>
                 </ul>
               </div>
               <button 
                 onClick={() => handleSimulateStripeCheckout('pro')}
                 disabled={isCheckoutLoading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl mt-6 transition disabled:opacity-50"
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl mt-6 transition disabled:opacity-50"
               >
-                {isCheckoutLoading && checkoutPlan === 'pro' ? 'Processando Stripe...' : sub?.tier_name === 'Pro Plan' ? 'Plano Ativo' : 'Comprar Pro via Stripe'}
-              </button>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className={`border p-5 rounded-2xl flex flex-col justify-between transition bg-slate-950/20 ${sub?.tier_name === 'Enterprise' ? 'border-indigo-500' : 'border-slate-850'}`}>
-              <div className="space-y-3">
-                <span className="text-[10px] text-amber-500 font-semibold uppercase tracking-wider bg-amber-950/20 border border-amber-900 px-2 py-0.5 rounded-full">Corporativo</span>
-                <div>
-                  <h4 className="text-sm font-bold text-white mt-1">Vesta Enterprise</h4>
-                  <p className="text-slate-500 text-[11px] mt-0.5">SaaS completo com relatórios avançados de auditoria.</p>
-                </div>
-                <div className="text-white text-xl font-bold">R$ 199,90 <span className="text-xs text-slate-500">/mês</span></div>
-                <ul className="text-[11px] text-slate-400 space-y-2 pt-2 border-t border-slate-900">
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> Relatórios de BI Inteligente</li>
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> Multi-usuário ilimitado</li>
-                  <li className="flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1.5 text-emerald-500" /> RLS com Backup Cloud</li>
-                </ul>
-              </div>
-              <button 
-                onClick={() => handleSimulateStripeCheckout('enterprise')}
-                disabled={isCheckoutLoading}
-                className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-semibold py-2 rounded-xl mt-6 transition disabled:opacity-50"
-              >
-                {isCheckoutLoading && checkoutPlan === 'enterprise' ? 'Processando Stripe...' : sub?.tier_name === 'Enterprise' ? 'Plano Ativo' : 'Upgrade via Stripe'}
+                {isCheckoutLoading && checkoutPlan === 'pro' ? t('processingStripe', 'Processando Stripe...') : sub?.tier_name === 'Pro Plan' || sub?.tier_name === 'Pro' || sub?.tier_name === 'Vesta Pro' ? t('planActiveBtn', 'Plano Ativo') : t('buyProStripe', 'Comprar Pro via Stripe')}
               </button>
             </div>
 

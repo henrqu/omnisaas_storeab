@@ -116,6 +116,8 @@ export interface Transaction {
   category: string;
   date: string;
   description: string;
+  expense_type?: 'fixed' | 'variable';
+  subcategory?: string;
 }
 
 export interface Budget {
@@ -227,4 +229,21 @@ export interface Notification {
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'error';
   created_at: string;
+}
+
+export interface EBook {
+  id: string;
+  title: string;
+  description: string;
+  cover_url: string;
+  product_url: string;
+  category: string;
+  price?: number;
+  tags: string[];
+  status: 'published' | 'draft';
+  created_at: string;
+  updated_at: string;
+  views_count?: number;
+  clicks_count?: number;
+  recommendations_count?: number;
 }

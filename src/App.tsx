@@ -39,8 +39,14 @@ import CrmSalesView from './components/CrmSalesView';
 import AiCopilotView from './components/AiCopilotView';
 import SubscriptionProfileView from './components/SubscriptionProfileView';
 import ProductivityView from './components/ProductivityView';
+import NetWorthView from './components/NetWorthView';
+import CalculatorsView from './components/CalculatorsView';
+import LearningHubView from './components/LearningHubView';
 import LoginView from './components/LoginView';
 import OmniSaaSLogo from './components/OmniSaaSLogo';
+import SplashScreen from './components/SplashScreen';
+import { Briefcase, Calculator } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 
 interface Toast {
   id: string;
@@ -72,6 +78,23 @@ export default function App() {
   });
 
   const [activeView, setActiveView] = useState<string>('dashboard');
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('omnisaas_splash_shown') !== 'true';
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    try {
+      sessionStorage.setItem('omnisaas_splash_shown', 'true');
+    } catch (e) {
+      // Ignore
+    }
+  };
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
   
@@ -302,6 +325,14 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Check for direct URL paths like /admin or /learning-hub on mount
+    const initialPath = window.location.pathname.replace('/', '');
+    if (initialPath === 'admin') {
+      setActiveView('admin');
+    } else if (initialPath === 'learning-hub') {
+      setActiveView('learning-hub');
+    }
+
     // Initialize standard state values
     setProfile(LocalDatabase.getProfile());
     setNotifications(LocalDatabase.getNotifications());
@@ -395,6 +426,8 @@ export default function App() {
   const navItems = [
     { id: 'dashboard', label: t('dashboard', 'Painel Executivo'), icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'finance', label: t('finance', 'Finanças & Orçamentos'), icon: <Coins className="w-4 h-4" /> },
+    { id: 'net-worth', label: 'Net Worth', icon: <Briefcase className="w-4 h-4 text-indigo-400" /> },
+    { id: 'calculators', label: 'Calculadoras 🧮', icon: <Calculator className="w-4 h-4 text-emerald-450" /> },
     { id: 'productivity', label: t('productivity', 'Estudos & Pomodoro'), icon: <BookOpen className="w-4 h-4 text-emerald-400" /> },
     { id: 'habits', label: t('habits', 'Hábitos & Metas'), icon: <Flame className="w-4 h-4" /> },
     { id: 'health', label: t('health', 'Sinais Vitais & Dieta'), icon: <Heart className="w-4 h-4" /> },
@@ -402,6 +435,7 @@ export default function App() {
     { id: 'company', label: t('company', 'Empresa & Folha CLT'), icon: <Building className="w-4 h-4" /> },
     { id: 'crm', label: t('crm', 'Vendas & CRM'), icon: <ShoppingCart className="w-4 h-4" /> },
     { id: 'ai', label: t('ai', 'Copiloto Vesta AI'), icon: <Sparkles className="w-4 h-4 text-emerald-400" /> },
+    { id: 'learning-hub', label: t('learningHub', '📚 Learning Hub'), icon: <BookOpen className="w-4 h-4 text-amber-400" /> },
     { id: 'profile', label: t('profile', 'Assinatura & Perfil'), icon: <User className="w-4 h-4" /> },
   ];
 
@@ -411,6 +445,10 @@ export default function App() {
         return <DashboardView onNavigate={setActiveView} onShowNotification={handleShowNotification} />;
       case 'finance':
         return <FinanceView onShowNotification={handleShowNotification} />;
+      case 'net-worth':
+        return <NetWorthView onShowNotification={handleShowNotification} />;
+      case 'calculators':
+        return <CalculatorsView onShowNotification={handleShowNotification} />;
       case 'productivity':
         return <ProductivityView onShowNotification={handleShowNotification} />;
       case 'habits':
@@ -425,6 +463,10 @@ export default function App() {
         return <CrmSalesView onShowNotification={handleShowNotification} />;
       case 'ai':
         return <AiCopilotView onShowNotification={handleShowNotification} />;
+      case 'learning-hub':
+        return <LearningHubView onShowNotification={handleShowNotification} />;
+      case 'admin':
+        return <LearningHubView onShowNotification={handleShowNotification} isAdminView={true} />;
       case 'profile':
         return <SubscriptionProfileView onShowNotification={handleShowNotification} />;
       default:
@@ -437,16 +479,24 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <LanguageThemeContext.Provider value={{ language, setLanguage, theme, setTheme, toggleTheme, t }}>
+        <AnimatePresence mode="wait">
+          {showSplash && (
+            <SplashScreen key="splash" onComplete={handleSplashComplete} />
+          )}
+        </AnimatePresence>
         <LoginView 
           onLogin={(email, provider, fullName, phone) => {
             setIsLoggedIn(true);
             localStorage.setItem('omnisaas_logged_in', 'true');
+            localStorage.setItem('omnisaas_logged_in_email', email.trim().toLowerCase());
             // update profile locally
             const currentProfile = LocalDatabase.getProfile();
+            const isAdmin = email.trim().toLowerCase() === 'kaluvih@gmail.com';
             LocalDatabase.updateProfile({
               username: email.split('@')[0],
-              full_name: fullName || currentProfile.full_name || 'Lucas King',
-              phone: phone || currentProfile.phone || ''
+              full_name: fullName || currentProfile.full_name || (isAdmin ? 'Kalu Vih' : 'Lucas King'),
+              phone: phone || currentProfile.phone || '',
+              role: isAdmin ? 'admin' : 'owner'
             });
             setProfile(LocalDatabase.getProfile());
           }} 
@@ -476,6 +526,11 @@ export default function App() {
 
   return (
     <LanguageThemeContext.Provider value={{ language, setLanguage, theme, setTheme, toggleTheme, t }}>
+      <AnimatePresence mode="wait">
+        {showSplash && (
+          <SplashScreen key="splash" onComplete={handleSplashComplete} />
+        )}
+      </AnimatePresence>
       <div className="min-h-screen bg-slate-950 text-slate-300 flex flex-col md:flex-row font-sans" id="omnisaas-root-layout">
         
         {/* SIDEBAR ESQUERDA (Desktop Navigation) */}
@@ -501,6 +556,10 @@ export default function App() {
                 key={item.id}
                 onClick={() => {
                   setActiveView(item.id);
+                  const targetPath = item.id === 'dashboard' ? '/' : `/${item.id}`;
+                  if (window.location.pathname !== targetPath) {
+                    window.history.pushState({}, '', targetPath);
+                  }
                   setIsMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition ${
@@ -551,6 +610,7 @@ export default function App() {
                     setIsLeftProfileOpen(false);
                     setIsLoggedIn(false);
                     localStorage.setItem('omnisaas_logged_in', 'false');
+                    localStorage.removeItem('omnisaas_logged_in_email');
                     handleShowNotification(t('logout', 'Fazer Logout'), t('logoutSuccess', 'Logout realizado com sucesso.'), 'info');
                   }}
                   className="w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-rose-500/10 text-rose-400 rounded-lg"
@@ -720,6 +780,7 @@ export default function App() {
                         setIsRightProfileOpen(false);
                         setIsLoggedIn(false);
                         localStorage.setItem('omnisaas_logged_in', 'false');
+                        localStorage.removeItem('omnisaas_logged_in_email');
                         handleShowNotification(t('logout', 'Fazer Logout'), t('logoutSuccess', 'Logout realizado com sucesso.'), 'info');
                       }}
                       className="w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-rose-500/10 text-rose-400 rounded-lg"

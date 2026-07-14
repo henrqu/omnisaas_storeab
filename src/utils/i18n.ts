@@ -178,7 +178,32 @@ export const translations: TranslationDict = {
   simulatedPayCancelBtn: { pt: 'Cancelar Checkout', en: 'Cancel Checkout', es: 'Cancelar Pago' },
   detectedLocaleIs: { pt: 'Idioma Detectado:', en: 'Detected Language:', es: 'Idioma Detectado:' },
   activeLicense: { pt: 'Licença Ativa com Stripe', en: 'Active License with Stripe', es: 'Licencia Activa com Stripe' },
-  supabaseInstructionCopy: { pt: 'Copie e execute o SQL acima no SQL Editor do seu console Supabase para criar a estrutura:', en: 'Copy and run the SQL above in the SQL Editor of your Supabase console to create the table structure:', es: 'Copie y ejecute el SQL anterior en el Editor SQL de su consola Supabase para criar la estrutura:' }
+  supabaseInstructionCopy: { pt: 'Copie e execute o SQL acima no SQL Editor do seu console Supabase para criar a estrutura:', en: 'Copy and run the SQL above in the SQL Editor of your Supabase console to create the table structure:', es: 'Copie y ejecute el SQL anterior en el Editor SQL de su consola Supabase para criar la estrutura:' },
+  userProfileSecurity: { pt: 'Segurança do Perfil de Usuário', en: 'User Profile Security', es: 'Seguridad del Perfil de Usuario' },
+  displayNameLabel: { pt: 'Nome de Exibição / Razão Social', en: 'Display Name / Corporate Name', es: 'Nombre de Mostrar / Razón Social' },
+  profilePhotoLabel: { pt: 'Foto de Perfil (Carregar da Galeria)', en: 'Profile Photo (Upload from Gallery)', es: 'Foto de Perfil (Subir de la Galería)' },
+  emailLabel: { pt: 'E-mail de Cadastro (Identificação)', en: 'Registration Email (Identity)', es: 'Correo de Registro (Identificación)' },
+  updateProfileBtn: { pt: 'Atualizar Perfil', en: 'Update Profile', es: 'Actualizar Perfil' },
+  rlsTitle: { pt: 'Multi-Tenant Row-Level Security', en: 'Multi-Tenant Row-Level Security', es: 'Multi-Tenant Row-Level Security' },
+  rlsDesc: { pt: 'Seus dados estão protegidos por RLS integrado em nosso banco de dados centralizado. Cada transação é filtrada pela cláusula SQL WHERE user_id = auth.uid() para isolamento absoluto em ambiente de produção distribuído.', en: 'Your data is protected by integrated RLS in our centralized database. Each transaction is filtered by the SQL clause WHERE user_id = auth.uid() for absolute isolation in a distributed production environment.', es: 'Sus datos están protegidos por RLS integrado en nuestra base de datos centralizada. Cada transacción se filtra por la cláusula SQL WHERE user_id = auth.uid() para un aislamiento absoluto en un entorno de producción distribuido.' },
+  currentSubscription: { pt: 'Assinatura Atual', en: 'Current Subscription', es: 'Suscripción Actual' },
+  accountActiveDesc: { pt: 'Sua conta corporativa está ativa e adimplente.', en: 'Your corporate account is active and in good standing.', es: 'Su cuenta corporativa está activa y al día.' },
+  accountTrialDesc: { pt: 'Sua conta corporativa está em teste comercial/trial.', en: 'Your corporate account is in commercial trial.', es: 'Su cuenta corporativa está en período de prueba comercial.' },
+  monthlyCycle: { pt: 'Ciclo mensal', en: 'Monthly cycle', es: 'Ciclo mensual' },
+  activeStatus: { pt: 'Ativo', en: 'Active', es: 'Activo' },
+  saasUpgradeOptions: { pt: 'Opções de Upgrade do SaaS', en: 'SaaS Upgrade Options', es: 'Opciones de Upgrade del SaaS' },
+  saasUpgradeDesc: { pt: 'Mude de plano em segundos. Testado pelo simulador de checkout Stripe.', en: 'Change plans in seconds. Tested with the Stripe checkout simulator.', es: 'Cambie de plan en segundos. Probado con el simulador de checkout de Stripe.' },
+  secureCheckoutSsl: { pt: 'Checkout Seguro SSL', en: 'Secure SSL Checkout', es: 'Checkout Seguro SSL' },
+  popularBadge: { pt: 'Popular', en: 'Popular', es: 'Popular' },
+  professionalTier: { pt: 'Profissional', en: 'Professional', es: 'Profesional' },
+  proPlanDesc: { pt: 'Ideal para autônomos, investidores e consultórios.', en: 'Ideal for freelancers, investors, and clinics.', es: 'Ideal para autónomos, inversores y clínicas.' },
+  featureCrm: { pt: 'CRM e Folhas Ilimitadas', en: 'Unlimited CRM & Payroll', es: 'CRM y Nóminas Ilimitadas' },
+  featureAlerts: { pt: 'Alertas por E-mail', en: 'Email Alerts & Notifications', es: 'Alertas por Correo Electrónico' },
+  featureVip: { pt: 'Suporte VIP Prioritário', en: 'Priority VIP Support', es: 'Soporte VIP Prioritario' },
+  planActiveBtn: { pt: 'Plano Ativo', en: 'Active Plan', es: 'Plan Activo' },
+  processingStripe: { pt: 'Processando Stripe...', en: 'Processing Stripe...', es: 'Procesando Stripe...' },
+  buyProStripe: { pt: 'Comprar Pro via Stripe', en: 'Buy Pro via Stripe', es: 'Comprar Pro vía Stripe' },
+  learningHub: { pt: '📚 Learning Hub', en: '📚 Learning Hub', es: '📚 Learning Hub' }
 };
 
 export const formatCurrency = (value: number, lang: Language): string => {

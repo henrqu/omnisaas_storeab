@@ -518,7 +518,94 @@ CREATE INDEX idx_notifications_unread ON public.notifications(user_id) WHERE rea
 
 
 -- ==========================================
--- 21. CRIAÇÃO DE ÍNDICES ADICIONAIS PARA DESEMPENHO
+-- 21. NET_WORTH_ITEMS (Patrimônio e Wealth Tracking)
+-- ==========================================
+
+CREATE TABLE public.net_worth_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    type TEXT CHECK (type IN ('asset', 'liability')) NOT NULL,
+    category TEXT CHECK (category IN (
+        'Properties', 'Vehicles', 'Businesses', 'Investments', 
+        'Gold & Precious Metals', 'Collectibles', 'Electronics', 'Insurance', 'Other'
+    )) NOT NULL,
+    name TEXT NOT NULL,
+    purchase_price NUMERIC(15,2) DEFAULT 0.00 NOT NULL,
+    estimated_value NUMERIC(15,2) DEFAULT 0.00 NOT NULL,
+    notes TEXT,
+    photo TEXT, -- Armazenamento base64 / URL do anexo
+    receipt TEXT, -- Armazenamento base64 / URL do recibo
+    document TEXT, -- Armazenamento base64 / URL do comprovante
+    photo_name TEXT,
+    receipt_name TEXT,
+    document_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.net_worth_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Gerenciamento de patrimônio individual" 
+ON public.net_worth_items FOR ALL USING (auth.uid() = user_id);
+
+CREATE INDEX idx_net_worth_user ON public.net_worth_items(user_id);
+CREATE INDEX idx_net_worth_category ON public.net_worth_items(category);
+
+
+-- ==========================================
+-- 22. CALCULATOR_PREFERENCES (Favoritos e Recentes)
+-- ==========================================
+
+CREATE TABLE public.calculator_preferences (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    favorites TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
+    recently_used TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    UNIQUE(user_id)
+);
+
+ALTER TABLE public.calculator_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Preferências de calculadora individuais" 
+ON public.calculator_preferences FOR ALL USING (auth.uid() = user_id);
+
+
+-- ==========================================
+-- 23. EBOOKS (Learning Hub - Livros e Guias Digitais)
+-- ==========================================
+
+CREATE TABLE public.ebooks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title TEXT NOT NULL,
+    description TEXT,
+    cover_url TEXT,
+    product_url TEXT NOT NULL,
+    category TEXT NOT NULL,
+    price NUMERIC(15,2),
+    tags TEXT[] DEFAULT '{}'::TEXT[] NOT NULL,
+    status TEXT CHECK (status IN ('published', 'draft')) DEFAULT 'draft' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.ebooks ENABLE ROW LEVEL SECURITY;
+
+-- Usuários comuns podem apenas visualizar livros publicados
+CREATE POLICY "Leitura de livros publicados" 
+ON public.ebooks FOR SELECT USING (status = 'published');
+
+-- Apenas o administrador autorizado (role = 'admin') pode realizar mutações
+CREATE POLICY "Gerenciamento completo pelo Administrador" 
+ON public.ebooks FOR ALL TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+  )
+);
+
+
+-- ==========================================
+-- 24. CRIAÇÃO DE ÍNDICES ADICIONAIS PARA DESEMPENHO
 -- ==========================================
 
 -- Claves foráneas ya crean índices en PostgreSQL para búsquedas de relaciones

@@ -23,7 +23,8 @@ import {
   AiHistory,
   Notification,
   Subscription,
-  Profile
+  Profile,
+  EBook
 } from '../types/schema';
 
 // Helper to generate UUIDs
@@ -818,5 +819,69 @@ export class LocalDatabase {
     const updated = notifications.map(n => ({ ...n, read: true }));
     this.set('notifications', updated);
     return updated;
+  }
+
+  // --- EBooks / Learning Hub ---
+  static getEBooks(): EBook[] {
+    return this.get<EBook[]>('ebooks', []);
+  }
+
+  static saveEBook(ebook: EBook): EBook[] {
+    const ebooks = this.getEBooks();
+    const index = ebooks.findIndex(b => b.id === ebook.id);
+    if (index >= 0) {
+      ebooks[index] = { ...ebook, updated_at: new Date().toISOString() };
+    } else {
+      ebooks.push({
+        ...ebook,
+        views_count: 0,
+        clicks_count: 0,
+        recommendations_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }
+    this.set('ebooks', ebooks);
+    return ebooks;
+  }
+
+  static deleteEBook(id: string): EBook[] {
+    const ebooks = this.getEBooks();
+    const filtered = ebooks.filter(b => b.id !== id);
+    this.set('ebooks', filtered);
+    return filtered;
+  }
+
+  static incrementEBookView(id: string): void {
+    const ebooks = this.getEBooks();
+    const updated = ebooks.map(b => {
+      if (b.id === id) {
+        return { ...b, views_count: (b.views_count || 0) + 1 };
+      }
+      return b;
+    });
+    this.set('ebooks', updated);
+  }
+
+  static incrementEBookClick(id: string): void {
+    const ebooks = this.getEBooks();
+    const updated = ebooks.map(b => {
+      if (b.id === id) {
+        return { ...b, clicks_count: (b.clicks_count || 0) + 1 };
+      }
+      return b;
+    });
+    this.set('ebooks', updated);
+  }
+
+  static incrementEBookRecommendation(id: string): void {
+    const ebooks = this.getEBooks();
+    const updated = ebooks.map(b => {
+      if (b.id === id) {
+        return { ...b, recommendations_count: (b.recommendations_count || 0) + 1 };
+      }
+      return b;
+    });
+    this.set('ebooks', updated);
   }
 }

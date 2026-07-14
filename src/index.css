@@ -178,3 +178,29 @@ body {
 .animate-fade-in {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Elegant Print layout stylesheet overrides */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #paycheck-ledger-sheet, #paycheck-ledger-sheet * {
+    visibility: visible !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+  #paycheck-ledger-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  /* Hide interactive control elements when printing */
+  .no-print, .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
