@@ -21,12 +21,15 @@ import {
 } from 'lucide-react';
 import { LocalDatabase } from '../utils/db';
 import { Product, Inventory, Customer, Sale } from '../types/schema';
+import { useLanguageTheme, formatCurrency } from '../utils/i18n';
 
 interface CrmSalesViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
 }
 
 export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) {
+  const { language, currency } = useLanguageTheme();
+  const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
   const [activeTab, setActiveTab] = useState<'products' | 'customers' | 'sales'>('products');
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -184,7 +187,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
     setSellProdId('');
     setSellCustId('');
     setSellQty('1');
-    onShowNotification('Venda Registrada! 🛒', `Pedido gerado com sucesso. Valor total: R$ ${newSale.total_amount.toFixed(2)}.`, 'success');
+    onShowNotification('Venda Registrada! 🛒', `Pedido gerado com sucesso. Valor total: ${formatCurrency(newSale.total_amount, language)}.`, 'success');
   };
 
   const handleDeleteProduct = (id: string, name: string) => {
@@ -274,7 +277,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Preço de Venda (R$)</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Preço de Venda ({currencySymbol})</label>
                   <input 
                     type="number" step="0.01" placeholder="299.00"
                     value={prodPrice} onChange={(e) => setProdPrice(e.target.value)}
@@ -284,7 +287,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Custo de Operação / Aquisição (R$)</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Custo de Operação / Aquisição ({currencySymbol})</label>
                 <input 
                   type="number" step="0.01" placeholder="45.00"
                   value={prodCost} onChange={(e) => setProdCost(e.target.value)}
@@ -337,7 +340,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                     <div className="flex items-center justify-between md:justify-end space-x-6 mt-4 md:mt-0 pt-3 md:pt-0 border-t border-slate-850 md:border-transparent">
                       <div className="text-right">
                         <span className="text-xs text-slate-500 block uppercase font-medium">Preço</span>
-                        <span className="text-emerald-400 font-bold text-sm">R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span className="text-emerald-400 font-bold text-sm">{formatCurrency(p.price, language)}</span>
                       </div>
 
                       <div className="text-right">
@@ -502,7 +505,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                 >
                   <option value="">-- Selecione o Produto --</option>
                   {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} - R$ {p.price.toLocaleString('pt-BR')}</option>
+                    <option key={p.id} value={p.id}>{p.name} - {formatCurrency(p.price, language)}</option>
                   ))}
                 </select>
               </div>
@@ -554,7 +557,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                     <div className="text-right flex items-center space-x-5">
                       <div>
                         <span className="text-[10px] text-slate-500 block">Quantidade: {s.quantity} un</span>
-                        <span className="text-white font-bold text-sm">R$ {s.total_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span className="text-white font-bold text-sm">{formatCurrency(s.total_amount, language)}</span>
                       </div>
                       <button 
                         onClick={() => {
@@ -634,7 +637,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                   </div>
                   <div className="flex space-x-12 text-right">
                     <span>{activeReceipt.quantity}</span>
-                    <span className="font-bold text-white">R$ {activeReceipt.total_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-white">{formatCurrency(activeReceipt.total_amount, language)}</span>
                   </div>
                 </div>
               </div>
@@ -643,7 +646,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               <div className="space-y-1 text-slate-550 text-[10px]">
                 <div className="flex justify-between">
                   <span>Impostos Incidentes (NFS-e de Serviços)</span>
-                  <span>Incluso (16.5% - R$ {(activeReceipt.total_amount * 0.165).toFixed(2)})</span>
+                  <span>Incluso (16.5% - {formatCurrency(activeReceipt.total_amount * 0.165, language)})</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Gateway Stripe Processing Fee</span>
@@ -654,7 +657,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               {/* Big Total */}
               <div className="bg-slate-950/20 p-3 rounded-xl border border-slate-850 flex justify-between items-center text-sm font-bold">
                 <span className="text-white">TOTAL LIQUIDADO:</span>
-                <span className="text-emerald-400 text-base">R$ {activeReceipt.total_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span className="text-emerald-400 text-base">{formatCurrency(activeReceipt.total_amount, language)}</span>
               </div>
             </div>
 

@@ -1,22 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI } from "@google/genai";
 
-let ai: GoogleGenAI | null = null;
-try {
-  if (process.env.GEMINI_API_KEY) {
-    ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
-    });
-  }
-} catch (err) {
-  console.error("Erro ao inicializar o SDK Gemini:", err);
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS Configuration
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -36,6 +20,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       success: false,
       error: `Method ${req.method} Not Allowed`
     });
+  }
+
+  // Initialize Gemini SDK with telemetry header inside the handler to prevent stale serverless contexts on Vercel
+  let ai: GoogleGenAI | null = null;
+  try {
+    if (process.env.GEMINI_API_KEY) {
+      ai = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Erro ao inicializar o SDK Gemini:", err);
   }
 
   const { prompt, systemInstruction } = req.body || {};

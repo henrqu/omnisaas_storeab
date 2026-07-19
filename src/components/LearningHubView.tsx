@@ -308,7 +308,7 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
         1. Seja conciso e use formatação Markdown com títulos, tópicos e ênfases de forma elegante.
         2. Recomende de 1 a 2 livros explicando explicitamente POR QUE esses livros se aplicam às metas ou hábitos que ele possui (ex: se tem meta de negócios, sugira livros de Business ou Growth; se possui foco em saúde, sugira nutrição).
         3. No fim, crie um pequeno chamado para ação elegante direcionando-o a clicar no botão "View Book" do livro indicado.
-        4. Responda inteiramente no idioma ${language === 'pt' ? 'Português Brasileiro (pt-BR)' : language === 'es' ? 'Espanhol (es-ES)' : 'Inglês (en-US)'}.
+        4. Responda inteiramente no idioma ${language.startsWith('pt') ? 'Português Brasileiro (pt-BR)' : language.startsWith('es') ? 'Espanhol (es-ES)' : 'Inglês (en-US)'}.
       `;
 
       const response = await fetch('/api/chat', {
@@ -318,7 +318,11 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
         },
         body: JSON.stringify({
           prompt: promptText,
-          systemInstruction: "Você é o Consultor Literário Vesta AI. Analise o perfil do usuário e faça recomendações estratégicas de e-books e guias digitais com base no catálogo disponível."
+          systemInstruction: language.startsWith('pt')
+            ? "Você é o Consultor Literário Vesta AI. Analise o perfil do usuário e faça recomendações estratégicas de e-books e guias digitais com base no catálogo disponível."
+            : language.startsWith('es')
+            ? "Eres el Consultor Literario Vesta AI. Analiza el perfil del usuario y haz recomendaciones estratégicas de libros electrónicos y guías digitales según el catálogo disponible."
+            : "You are the Vesta AI Literary Consultant. Analyze the user profile and make strategic recommendations of e-books and digital guides based on the available catalog."
         })
       });
 

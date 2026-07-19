@@ -38,6 +38,8 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchSubmitted, setIsSearchSubmitted] = useState(false);
 
   useEffect(() => {
     // Initialize & Load local db
@@ -108,6 +110,17 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
     (h.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
   );
 
+  const filteredEmployees = employees.filter(e => 
+    (e.full_name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+    (e.role || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+    (e.department || '').toLowerCase().includes((searchQuery || '').toLowerCase())
+  );
+
+  const filteredProducts = products.filter(p => 
+    (p.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+    (p.sku || '').toLowerCase().includes((searchQuery || '').toLowerCase())
+  );
+
   const expenseRatio = totalIncome > 0 ? ((totalExpense / totalIncome) * 100).toFixed(1) : '0';
 
   return (
@@ -156,23 +169,327 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setIsSearchSubmitted(false);
+          }}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => {
+            // Delay to allow clicking items in dropdown
+            setTimeout(() => setIsSearchFocused(false), 250);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setIsSearchSubmitted(true);
+              setIsSearchFocused(false);
+            }
+          }}
           placeholder={t('searchPlaceholder', 'Pesquisar transações, hábitos ou metas...')}
           className="w-full bg-slate-900/40 border border-slate-800 focus:border-indigo-500 rounded-xl pl-11 pr-10 py-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all shadow-sm"
           id="dashboard-search-input"
         />
         {searchQuery && (
           <button 
-            onClick={() => setSearchQuery('')}
+            onClick={() => {
+              setSearchQuery('');
+              setIsSearchSubmitted(false);
+            }}
             className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs text-slate-400 hover:text-white font-semibold"
           >
             Clear
           </button>
         )}
+
+        {/* Autocomplete suggestions dropdown */}
+        {isSearchFocused && searchQuery.trim().length > 0 && !isSearchSubmitted && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto divide-y divide-slate-800/60 backdrop-blur-md">
+            {/* Transactions Section */}
+            {filteredTransactions.length > 0 && (
+              <div className="p-2">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  💰 {t('recentTransactions', 'Transações')}
+                </div>
+                {filteredTransactions.slice(0, 3).map(tr => (
+                  <button
+                    key={tr.id}
+                    onClick={() => {
+                      setSearchQuery(tr.description);
+                      setIsSearchSubmitted(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition flex items-center justify-between text-xs text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <span className="truncate font-medium">{tr.description}</span>
+                    <span className="text-[10px] bg-slate-800/60 px-2 py-0.5 rounded text-slate-400 uppercase font-semibold">
+                      {tr.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Goals Section */}
+            {filteredGoals.length > 0 && (
+              <div className="p-2">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  🎯 {t('activeGoals', 'Metas')}
+                </div>
+                {filteredGoals.slice(0, 3).map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => {
+                      setSearchQuery(g.name);
+                      setIsSearchSubmitted(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition flex items-center justify-between text-xs text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <span className="truncate font-medium">{g.name}</span>
+                    <span className="text-[10px] text-indigo-400 font-semibold">
+                      {g.current_value} / {g.target_value} {g.unit}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Habits Section */}
+            {filteredHabits.length > 0 && (
+              <div className="p-2">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  🔥 {t('habitCheckoff', 'Hábitos')}
+                </div>
+                {filteredHabits.slice(0, 3).map(h => (
+                  <button
+                    key={h.id}
+                    onClick={() => {
+                      setSearchQuery(h.name);
+                      setIsSearchSubmitted(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition flex items-center justify-between text-xs text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <span className="truncate font-medium">{h.name}</span>
+                    <span className="text-[10px] text-orange-400 font-semibold">
+                      Streak: {h.streak}d
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Employees Section */}
+            {filteredEmployees.length > 0 && (
+              <div className="p-2">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  👥 {t('erpEmployees', 'Colaboradores')}
+                </div>
+                {filteredEmployees.slice(0, 3).map(e => (
+                  <button
+                    key={e.id}
+                    onClick={() => {
+                      setSearchQuery(e.full_name);
+                      setIsSearchSubmitted(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition flex items-center justify-between text-xs text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <span className="truncate font-medium">{e.full_name}</span>
+                    <span className="text-[10px] bg-slate-800/60 px-2 py-0.5 rounded text-cyan-400 font-semibold">
+                      {e.role}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Products Section */}
+            {filteredProducts.length > 0 && (
+              <div className="p-2">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  📦 {t('products', 'Produtos')}
+                </div>
+                {filteredProducts.slice(0, 3).map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      setSearchQuery(p.name);
+                      setIsSearchSubmitted(true);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition flex items-center justify-between text-xs text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <span className="truncate font-medium">{p.name}</span>
+                    <span className="text-[10px] text-emerald-400 font-semibold">
+                      {p.sku}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {filteredTransactions.length === 0 &&
+             filteredGoals.length === 0 &&
+             filteredHabits.length === 0 &&
+             filteredEmployees.length === 0 &&
+             filteredProducts.length === 0 && (
+               <div className="p-4 text-center text-xs text-slate-500">
+                 {t('noSuggestions', 'Nenhuma sugestão rápida encontrada.')}
+               </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Grid de Métricas Principais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-metrics-grid">
+      {/* If Search is Submitted, render Search Results Panel; otherwise, the regular Dashboard metrics & grids */}
+      {isSearchSubmitted && searchQuery.trim().length > 0 ? (
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-6 animate-fade-in" id="search-results-panel">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/60 pb-4 gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-white tracking-tight flex items-center">
+                <Search className="w-5 h-5 text-indigo-400 mr-2" />
+                {t('searchResultsTitle', 'Resultados de Pesquisa')}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                {t('foundResultsFor', 'Encontramos correspondências para')} <span className="text-indigo-400 font-semibold">"{searchQuery}"</span>
+              </p>
+            </div>
+            <button 
+              onClick={() => {
+                setSearchQuery('');
+                setIsSearchSubmitted(false);
+              }}
+              className="self-start sm:self-auto bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-xl border border-slate-750 transition cursor-pointer"
+            >
+              {t('backToDashboard', 'Voltar ao Dashboard')}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Match Transactions */}
+            <div className="bg-slate-950/40 border border-slate-850/60 p-4 rounded-xl space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>💰 {t('recentTransactions', 'Transações')}</span>
+                <span className="text-[10px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded">{filteredTransactions.length}</span>
+              </h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {filteredTransactions.map(tr => (
+                  <div key={tr.id} className="flex justify-between items-center bg-slate-900/30 p-2.5 rounded-lg border border-white/5 hover:border-indigo-500/10 transition">
+                    <div>
+                      <p className="text-xs font-medium text-slate-200">{tr.description}</p>
+                      <p className="text-[10px] text-slate-500">{tr.date} • {tr.category}</p>
+                    </div>
+                    <span className={`text-xs font-bold ${tr.type === 'income' ? 'text-emerald-400' : 'text-slate-300'}`}>
+                      {tr.type === 'income' ? '+' : '-'} {formatCurrency(tr.amount, language)}
+                    </span>
+                  </div>
+                ))}
+                {filteredTransactions.length === 0 && (
+                  <p className="text-xs text-slate-500 py-2 text-center italic">{t('noResults', 'Nenhuma transação correspondente.')}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Match Goals */}
+            <div className="bg-slate-950/40 border border-slate-850/60 p-4 rounded-xl space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>🎯 {t('activeGoals', 'Metas')}</span>
+                <span className="text-[10px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded">{filteredGoals.length}</span>
+              </h3>
+              <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                {filteredGoals.map(g => {
+                  const progress = Math.min(100, (g.current_value / g.target_value) * 100);
+                  return (
+                    <div key={g.id} className="bg-slate-900/30 p-2.5 rounded-lg border border-white/5 space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-semibold text-slate-200">{g.name}</span>
+                        <span className="text-slate-400">{g.current_value} / {g.target_value} {g.unit}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-indigo-500 rounded-full transition-all duration-1000" 
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {filteredGoals.length === 0 && (
+                  <p className="text-xs text-slate-500 py-2 text-center italic">{t('noResults', 'Nenhuma meta correspondente.')}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Match Habits */}
+            <div className="bg-slate-950/40 border border-slate-850/60 p-4 rounded-xl space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>🔥 {t('habitCheckoff', 'Hábitos')}</span>
+                <span className="text-[10px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded">{filteredHabits.length}</span>
+              </h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {filteredHabits.map(h => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const isCompleted = h.last_completed === today;
+                  return (
+                    <div key={h.id} className="flex justify-between items-center bg-slate-900/30 p-2.5 rounded-lg border border-white/5">
+                      <div className="flex items-center space-x-2 truncate">
+                        <button 
+                          onClick={() => handleToggleHabit(h.id)}
+                          className={`w-4 h-4 rounded flex items-center justify-center border transition-all cursor-pointer ${
+                            isCompleted ? 'bg-emerald-500 border-emerald-400 text-white' : 'border-slate-700 text-transparent'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3 h-3 fill-current" />
+                        </button>
+                        <span className={`text-xs truncate ${isCompleted ? 'line-through text-slate-500' : 'text-slate-300'}`}>
+                          {h.name}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-orange-400 font-bold bg-orange-950/20 border border-orange-500/10 px-2 py-0.5 rounded-full flex items-center">
+                        <Flame className="w-3 h-3 mr-0.5" /> {h.streak}d
+                      </span>
+                    </div>
+                  );
+                })}
+                {filteredHabits.length === 0 && (
+                  <p className="text-xs text-slate-500 py-2 text-center italic">{t('noResults', 'Nenhum hábito correspondente.')}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Match Other Entities (ERP / Products) */}
+            <div className="bg-slate-950/40 border border-slate-850/60 p-4 rounded-xl space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>💼 {t('erpProductsStaff', 'ERP: Produtos & Equipe')}</span>
+                <span className="text-[10px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded">
+                  {filteredEmployees.length + filteredProducts.length}
+                </span>
+              </h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {filteredEmployees.map(e => (
+                  <div key={e.id} className="flex justify-between items-center bg-slate-900/30 p-2.5 rounded-lg border border-white/5">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-200">{e.full_name}</p>
+                      <p className="text-[10px] text-slate-500">{e.role} • {e.department}</p>
+                    </div>
+                    <span className="text-[9px] bg-cyan-950 text-cyan-400 border border-cyan-800/30 px-2 py-0.5 rounded">Colaborador</span>
+                  </div>
+                ))}
+                {filteredProducts.map(p => (
+                  <div key={p.id} className="flex justify-between items-center bg-slate-900/30 p-2.5 rounded-lg border border-white/5">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-200">{p.name}</p>
+                      <p className="text-[10px] text-slate-500">SKU: {p.sku} • {formatCurrency(p.price, language)}</p>
+                    </div>
+                    <span className="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-2 py-0.5 rounded">Produto</span>
+                  </div>
+                ))}
+                {filteredEmployees.length === 0 && filteredProducts.length === 0 && (
+                  <p className="text-xs text-slate-500 py-2 text-center italic">{t('noResults', 'Nenhum registro de ERP correspondente.')}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Grid de Métricas Principais */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-metrics-grid">
         {/* Card Saldo Líquido */}
         <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/30 transition shadow-sm" id="metric-balance">
           <div className="flex justify-between items-start">
@@ -484,6 +801,8 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
           
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -25,8 +25,8 @@ import {
 } from 'lucide-react';
 import { LocalDatabase } from './utils/db';
 import { Notification, Profile } from './types/schema';
-import { LanguageThemeContext, translations, Language, Theme, formatCurrency } from './utils/i18n';
-import { Globe, Palette, Settings, Download, Printer, Edit, BookOpen, Database, Cloud, RefreshCw, AlertTriangle, Check, Copy } from 'lucide-react';
+import { LanguageThemeContext, translations, Language, Theme, formatCurrency, Currency, normalizeLanguage, detectDefaultCurrency } from './utils/i18n';
+import { Globe, Palette, Settings, Download, Printer, Edit, BookOpen, Database, Cloud, RefreshCw, AlertTriangle, Check, Copy, Sun, Moon } from 'lucide-react';
 
 // Import our modular child views
 import DashboardView from './components/DashboardView';
@@ -58,16 +58,30 @@ interface Toast {
 export default function App() {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('omnisaas_language');
-    if (saved) return saved as Language;
-    const browserLang = navigator.language.toLowerCase();
-    if (browserLang.startsWith('pt')) return 'pt';
-    if (browserLang.startsWith('es')) return 'es';
-    return 'en';
+    if (saved) return normalizeLanguage(saved);
+    return normalizeLanguage(navigator.language);
   });
 
+  const [currency, setCurrencyState] = useState<Currency>(() => {
+    const saved = localStorage.getItem('omnisaas_currency');
+    if (saved) return saved as Currency;
+    return detectDefaultCurrency();
+  });
+
+  const setCurrency = (curr: Currency) => {
+    setCurrencyState(curr);
+    localStorage.setItem('omnisaas_currency', curr);
+  };
+
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('omnisaas_language', lang);
+    const normalized = normalizeLanguage(lang);
+    setLanguageState(normalized);
+    localStorage.setItem('omnisaas_language', normalized);
+    // Auto align currency to the selected language if no currency was explicitly saved yet
+    if (!localStorage.getItem('omnisaas_currency')) {
+      const defaultCurr = normalized === 'pt-BR' ? 'BRL' : normalized === 'es' ? 'EUR' : 'USD';
+      setCurrency(defaultCurr);
+    }
   };
   const [theme, setTheme] = useState<Theme>('dark');
   const [isLeftProfileOpen, setIsLeftProfileOpen] = useState<boolean>(false);
@@ -409,9 +423,10 @@ export default function App() {
   };
 
   const t = (key: string, fallback?: string): string => {
+    const normLang = language.toLowerCase().startsWith('pt') ? 'pt' : language.toLowerCase().startsWith('es') ? 'es' : 'en';
     const entry = translations[key];
     if (!entry) return fallback || key;
-    return entry[language] || fallback || key;
+    return entry[normLang] || fallback || key;
   };
 
   const toggleTheme = () => {
@@ -426,8 +441,8 @@ export default function App() {
   const navItems = [
     { id: 'dashboard', label: t('dashboard', 'Painel Executivo'), icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'finance', label: t('finance', 'Finanças & Orçamentos'), icon: <Coins className="w-4 h-4" /> },
-    { id: 'net-worth', label: 'Net Worth', icon: <Briefcase className="w-4 h-4 text-indigo-400" /> },
-    { id: 'calculators', label: 'Calculadoras 🧮', icon: <Calculator className="w-4 h-4 text-emerald-450" /> },
+    { id: 'net-worth', label: t('netWorth', 'Net Worth'), icon: <Briefcase className="w-4 h-4 text-indigo-400" /> },
+    { id: 'calculators', label: t('calculators', 'Calculadoras 📊'), icon: <Calculator className="w-4 h-4 text-emerald-450" /> },
     { id: 'productivity', label: t('productivity', 'Estudos & Pomodoro'), icon: <BookOpen className="w-4 h-4 text-emerald-400" /> },
     { id: 'habits', label: t('habits', 'Hábitos & Metas'), icon: <Flame className="w-4 h-4" /> },
     { id: 'health', label: t('health', 'Sinais Vitais & Dieta'), icon: <Heart className="w-4 h-4" /> },
@@ -435,7 +450,7 @@ export default function App() {
     { id: 'company', label: t('company', 'Empresa & Folha CLT'), icon: <Building className="w-4 h-4" /> },
     { id: 'crm', label: t('crm', 'Vendas & CRM'), icon: <ShoppingCart className="w-4 h-4" /> },
     { id: 'ai', label: t('ai', 'Copiloto Vesta AI'), icon: <Sparkles className="w-4 h-4 text-emerald-400" /> },
-    { id: 'learning-hub', label: t('learningHub', '📚 Learning Hub'), icon: <BookOpen className="w-4 h-4 text-amber-400" /> },
+    { id: 'learning-hub', label: t('learningHub', 'Learning Hub 📚'), icon: <BookOpen className="w-4 h-4 text-amber-400" /> },
     { id: 'profile', label: t('profile', 'Assinatura & Perfil'), icon: <User className="w-4 h-4" /> },
   ];
 
@@ -478,7 +493,7 @@ export default function App() {
 
   if (!isLoggedIn) {
     return (
-      <LanguageThemeContext.Provider value={{ language, setLanguage, theme, setTheme, toggleTheme, t }}>
+      <LanguageThemeContext.Provider value={{ language, setLanguage, currency, setCurrency, theme, setTheme, toggleTheme, t }}>
         <AnimatePresence mode="wait">
           {showSplash && (
             <SplashScreen key="splash" onComplete={handleSplashComplete} />
@@ -525,7 +540,7 @@ export default function App() {
   }
 
   return (
-    <LanguageThemeContext.Provider value={{ language, setLanguage, theme, setTheme, toggleTheme, t }}>
+    <LanguageThemeContext.Provider value={{ language, setLanguage, currency, setCurrency, theme, setTheme, toggleTheme, t }}>
       <AnimatePresence mode="wait">
         {showSplash && (
           <SplashScreen key="splash" onComplete={handleSplashComplete} />
@@ -719,6 +734,74 @@ export default function App() {
 
             <div className="flex items-center space-x-4">
               
+              {/* Quick Language, Currency & Theme Switcher (User Intent: "coloque esta parte no topo, do saas, ao lado da hora") */}
+              <div className="flex items-center space-x-2.5 bg-slate-900 border border-white/5 px-2.5 py-1 rounded-lg">
+                {/* Language Switcher */}
+                <div className="flex items-center space-x-1 border-r border-white/10 pr-2.5">
+                  <Globe className="w-3.5 h-3.5 text-slate-400 mr-1" />
+                  {[
+                    { code: 'pt-BR', sub: 'BR' },
+                    { code: 'en-US', sub: 'US' },
+                    { code: 'es', sub: 'ES' }
+                  ].map(langOption => {
+                    const isSelected = language === langOption.code || (langOption.code === 'pt-BR' && language === 'pt') || (langOption.code === 'en-US' && language === 'en');
+                    return (
+                      <button
+                        key={langOption.code}
+                        onClick={() => {
+                          const code = langOption.code as Language;
+                          setLanguage(code);
+                          // Auto-align currency as requested by the user: BR with BRL, US with USD, ES with EUR
+                          const alignedCurrency = code.startsWith('pt') ? 'BRL' : code.startsWith('es') ? 'EUR' : 'USD';
+                          setCurrency(alignedCurrency as Currency);
+                        }}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition ${
+                          isSelected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {langOption.sub}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Currency Switcher */}
+                <div className="flex items-center space-x-1 border-r border-white/10 pr-2.5">
+                  <Coins className="w-3.5 h-3.5 text-slate-400 mr-1" />
+                  {[
+                    { code: 'BRL', sub: 'BR' },
+                    { code: 'USD', sub: 'US' },
+                    { code: 'EUR', sub: 'ES' }
+                  ].map(currencyOption => {
+                    const isSelected = currency === currencyOption.code;
+                    return (
+                      <button
+                        key={currencyOption.code}
+                        onClick={() => setCurrency(currencyOption.code as Currency)}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition ${
+                          isSelected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {currencyOption.code}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Theme Switcher */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-1 rounded text-slate-400 hover:text-white transition flex items-center justify-center"
+                  title="Alterar Tema"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  ) : (
+                    <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                  )}
+                </button>
+              </div>
+
               {/* Live Clock clock */}
               <div className="flex items-center space-x-1.5 text-slate-400 text-xs font-mono bg-slate-900 px-3 py-1.5 rounded-lg border border-white/5">
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
@@ -820,74 +903,8 @@ export default function App() {
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Language Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <Globe className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
-                    {t('languageLabel', 'Idioma / Língua')}
-                  </label>
-                  <p className="text-[11px] text-slate-500">{t('languageDesc', 'Mude a tradução completa do SaaS, incluindo moedas e métricas.')}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { code: 'pt', label: 'Português (BRL)', flag: '🇧🇷' },
-                      { code: 'en', label: 'English (USD)', flag: '🇺🇸' },
-                      { code: 'es', label: 'Español (EUR)', flag: '🇪🇸' }
-                    ].map(langOption => (
-                      <button
-                        key={langOption.code}
-                        onClick={() => {
-                          const code = langOption.code as Language;
-                          setLanguage(code);
-                          localStorage.setItem('omnisaas_language', code);
-                          handleShowNotification(code === 'en' ? 'Language Updated' : code === 'es' ? 'Idioma Actualizado' : 'Idioma Alterado', code === 'en' ? `Language defined to ${langOption.label}` : code === 'es' ? `Idioma definido a ${langOption.label}` : `Idioma definido para ${langOption.label}`, 'success');
-                        }}
-                        className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center space-y-1.5 transition ${
-                          language === langOption.code 
-                            ? 'bg-emerald-500/10 border-emerald-500 text-white' 
-                            : 'bg-black/20 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        <span className="text-lg">{langOption.flag}</span>
-                        <span>{langOption.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Theme Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <Palette className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
-                    {t('visualTheme', 'Visual / Tema')}
-                  </label>
-                  <p className="text-[11px] text-slate-500">{t('visualThemeDesc', 'Selecione o seu modo de contraste preferido do sistema.')}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { code: 'dark', label: 'Sophisticated Dark', icon: '🌙' },
-                      { code: 'light', label: 'Sophisticated Light', icon: '☀️' }
-                    ].map(themeOption => (
-                      <button
-                        key={themeOption.code}
-                        onClick={() => {
-                          setTheme(themeOption.code as Theme);
-                          document.documentElement.classList.toggle('light-theme', themeOption.code === 'light');
-                          handleShowNotification(t('themeUpdated', 'Tema Atualizado'), `${t('themeDefinedTo', 'Tema definido para')} ${themeOption.label}`, 'info');
-                        }}
-                        className={`p-4 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-2 transition ${
-                          theme === themeOption.code 
-                            ? 'bg-emerald-500/10 border-emerald-500 text-white' 
-                            : 'bg-black/20 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        <span>{themeOption.icon}</span>
-                        <span>{themeOption.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                  {/* Supabase Sync Controller */}
-                  <div className="space-y-3 border-t border-white/5 pt-5">
+                {/* Supabase Sync Controller */}
+                <div className="space-y-3">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
                       <Database className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
                       {t('supabaseSyncTitle', 'Nuvem Supabase Cloud')}

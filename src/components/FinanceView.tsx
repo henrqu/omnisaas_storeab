@@ -95,7 +95,8 @@ const DEFAULT_PLANNER_SHEET = (): PlannerSheet => ({
 });
 
 export default function FinanceView({ onShowNotification }: FinanceViewProps) {
-  const { t, language } = useLanguageTheme();
+  const { t, language, currency } = useLanguageTheme();
+  const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
   const [activeTab, setActiveTab] = useState<'transactions' | 'budgets' | 'excel-budget' | 'planner-universal' | 'paycheck-planner'>('paycheck-planner');
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -248,7 +249,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
         <tr>
           <td style="width: 20%; border: 1px solid black; padding: 6px; font-family: monospace; text-align: center; height: 24px;">${item.date || ''}</td>
           <td style="width: 60%; border: 1px solid black; padding: 6px; text-align: left; height: 24px;">${item.description || ''}</td>
-          <td style="width: 20%; border: 1px solid black; padding: 6px; font-family: monospace; text-align: right; height: 24px;">${item.amount ? 'R$ ' + item.amount.toFixed(2) : ''}</td>
+          <td style="width: 20%; border: 1px solid black; padding: 6px; font-family: monospace; text-align: right; height: 24px;">${item.amount ? formatCurrency(item.amount, language) : ''}</td>
         </tr>
       `).join('');
     };
@@ -372,7 +373,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                   ${renderRows(sheet.income)}
                   <tr class="total-row">
                     <td colspan="2">Total</td>
-                    <td style="text-align: right; font-family: monospace;">R$ ${sumIncome.toFixed(2)}</td>
+                    <td style="text-align: right; font-family: monospace;">${formatCurrency(sumIncome, language)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -392,7 +393,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                   ${renderRows(sheet.fixedExpenses)}
                   <tr class="total-row">
                     <td colspan="2">Total</td>
-                    <td style="text-align: right; font-family: monospace;">R$ ${sumFixed.toFixed(2)}</td>
+                    <td style="text-align: right; font-family: monospace;">${formatCurrency(sumFixed, language)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -412,7 +413,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                   ${renderRows(sheet.otherExpenses)}
                   <tr class="total-row">
                     <td colspan="2">Total</td>
-                    <td style="text-align: right; font-family: monospace;">R$ ${sumOther.toFixed(2)}</td>
+                    <td style="text-align: right; font-family: monospace;">${formatCurrency(sumOther, language)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -432,7 +433,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                   ${renderRows(sheet.bills)}
                   <tr class="total-row">
                     <td colspan="2">Total</td>
-                    <td style="text-align: right; font-family: monospace;">R$ ${sumBills.toFixed(2)}</td>
+                    <td style="text-align: right; font-family: monospace;">${formatCurrency(sumBills, language)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -453,27 +454,27 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
               <tbody>
                 <tr>
                   <td style="font-weight: bold; background-color: #f9f9f9; text-align: left;">Earnt</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${sheet.recapGoals.earnt.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${sumIncome.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace; font-weight: bold;">R$ ${diffEarnt.toFixed(2)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(sheet.recapGoals.earnt, language)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(sumIncome, language)}</td>
+                  <td style="text-align: right; font-family: monospace; font-weight: bold;">${formatCurrency(diffEarnt, language)}</td>
                 </tr>
                 <tr>
                   <td style="font-weight: bold; background-color: #f9f9f9; text-align: left;">Spent</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${sheet.recapGoals.spent.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${actualSpent.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace; font-weight: bold;">R$ ${diffSpent.toFixed(2)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(sheet.recapGoals.spent, language)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(actualSpent, language)}</td>
+                  <td style="text-align: right; font-family: monospace; font-weight: bold;">${formatCurrency(diffSpent, language)}</td>
                 </tr>
                 <tr>
                   <td style="font-weight: bold; background-color: #f9f9f9; text-align: left;">Debt</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${sheet.recapGoals.debt.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${actualDebt.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace; font-weight: bold;">R$ ${diffDebt.toFixed(2)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(sheet.recapGoals.debt, language)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(actualDebt, language)}</td>
+                  <td style="text-align: right; font-family: monospace; font-weight: bold;">${formatCurrency(diffDebt, language)}</td>
                 </tr>
                 <tr>
                   <td style="font-weight: bold; background-color: #f9f9f9; text-align: left;">Saved</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${sheet.recapGoals.saved.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace;">R$ ${actualSaved.toFixed(2)}</td>
-                  <td style="text-align: right; font-family: monospace; font-weight: bold;">R$ ${diffSaved.toFixed(2)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(sheet.recapGoals.saved, language)}</td>
+                  <td style="text-align: right; font-family: monospace;">${formatCurrency(actualSaved, language)}</td>
+                  <td style="text-align: right; font-family: monospace; font-weight: bold;">${formatCurrency(diffSaved, language)}</td>
                 </tr>
               </tbody>
             </table>
@@ -639,7 +640,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
     
     onShowNotification(
       'Lançamento Efetuado', 
-      `${txType === 'income' ? 'Crédito' : 'Débito'} de R$ ${amountNum.toFixed(2)} registrado em "${txCategory}".`, 
+      `${txType === 'income' ? 'Crédito' : 'Débito'} de ${formatCurrency(amountNum, language)} registrado em "${txCategory}".`, 
       'success'
     );
   };
@@ -665,14 +666,14 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
 
     setBudgets(LocalDatabase.getBudgets());
     setBgLimit('');
-    onShowNotification('Teto Orçamentário Salvo', `Orçamento para "${bgCategory}" definido em R$ ${limitNum.toFixed(2)}.`, 'success');
+    onShowNotification('Teto Orçamentário Salvo', `Orçamento para "${bgCategory}" definido em ${formatCurrency(limitNum, language)}.`, 'success');
   };
 
   const handleDeleteTransaction = (id: string, amount: number) => {
     const updated = LocalDatabase.deleteTransaction(id);
     setTransactions(updated);
     setBudgets(LocalDatabase.getBudgets());
-    onShowNotification('Transação Cancelada', `Lançamento de R$ ${amount.toFixed(2)} apagado permanentemente.`, 'info');
+    onShowNotification('Transação Cancelada', `Lançamento de ${formatCurrency(amount, language)} apagado permanentemente.`, 'info');
   };
 
   const handleDeleteBudget = (id: string, category: string) => {
@@ -687,7 +688,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
     setBudgets(LocalDatabase.getBudgets());
     onShowNotification(
       'Lançamento Registrado', 
-      `${tx.type === 'income' ? 'Receita' : 'Despesa'} de R$ ${tx.amount.toFixed(2)} adicionada a ${tx.category}.`, 
+      `${tx.type === 'income' ? 'Receita' : 'Despesa'} de ${formatCurrency(tx.amount, language)} adicionada a ${tx.category}.`, 
       'success'
     );
   };
@@ -698,7 +699,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
     const updated = LocalDatabase.deleteTransaction(id);
     setTransactions(updated);
     setBudgets(LocalDatabase.getBudgets());
-    onShowNotification('Lançamento Removido', `O registro de R$ ${amount.toFixed(2)} foi removido com sucesso.`, 'info');
+    onShowNotification('Lançamento Removido', `O registro de ${formatCurrency(amount, language)} foi removido com sucesso.`, 'info');
   };
 
   // Summaries calculation
@@ -715,7 +716,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
         <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wider block">Receita Bruta Acumulada</span>
-            <span className="text-emerald-400 font-black text-xl">R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            <span className="text-emerald-400 font-black text-xl">{formatCurrency(totalIncome, language)}</span>
           </div>
           <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/10">
             <TrendingUp className="w-5 h-5" />
@@ -726,7 +727,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
         <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wider block">Despesas Operacionais</span>
-            <span className="text-rose-400 font-black text-xl">R$ {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            <span className="text-rose-400 font-black text-xl">{formatCurrency(totalExpense, language)}</span>
           </div>
           <div className="p-3 bg-rose-500/10 rounded-xl text-rose-400 border border-rose-500/10">
             <TrendingDown className="w-5 h-5" />
@@ -738,7 +739,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           <div className="space-y-1">
             <span className="text-slate-500 font-bold text-[10px] uppercase tracking-wider block">Fluxo de Caixa Líquido</span>
             <span className={`font-black text-xl ${balance >= 0 ? 'text-indigo-400' : 'text-rose-400'}`}>
-              R$ {balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {formatCurrency(balance, language)}
             </span>
           </div>
           <div className={`p-3 rounded-xl border ${balance >= 0 ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/10' : 'bg-rose-500/10 text-rose-400 border-rose-500/10'}`}>
@@ -858,9 +859,9 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor Monetário (R$)</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor Monetário ({currencySymbol})</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">R$</span>
+                  <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">{currencySymbol}</span>
                   <input 
                     type="number" step="0.01" placeholder="450.00"
                     value={txAmount} onChange={(e) => setTxAmount(e.target.value)}
@@ -946,7 +947,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
 
                   <div className="flex items-center space-x-4">
                     <span className={`font-mono font-black text-sm ${t.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {t.type === 'income' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount, language)}
                     </span>
                     <button 
                       onClick={() => handleDeleteTransaction(t.id, t.amount)}
@@ -1001,9 +1002,9 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Teto Máximo de Gastos (R$)</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Teto Máximo de Gastos ({currencySymbol})</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">R$</span>
+                    <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">{currencySymbol}</span>
                     <input 
                       type="number" placeholder="2500"
                       value={bgLimit} onChange={(e) => setBgLimit(e.target.value)}
@@ -1076,7 +1077,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                         <div className="text-right pr-6">
                           <span className="text-[10px] text-slate-500 block">Consumido</span>
                           <span className={`font-bold text-sm ${isOverBudget ? 'text-rose-400 font-extrabold' : 'text-slate-300'}`}>
-                            R$ {b.spent_amount.toLocaleString('pt-BR')} / R$ {b.limit_amount.toLocaleString('pt-BR')}
+                            {formatCurrency(b.spent_amount, language)} / {formatCurrency(b.limit_amount, language)}
                           </span>
                         </div>
                       </div>
@@ -1228,9 +1229,9 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                     <th className="py-3 px-4 w-12 text-center">Ref</th>
                     <th className="py-3 px-4 min-w-[220px]">Item / Descrição</th>
                     <th className="py-3 px-4 min-w-[150px]">Categoria de Vida</th>
-                    <th className="py-3 px-4 text-right w-36">Valor Planejado (R$)</th>
-                    <th className="py-3 px-4 text-right w-36">Valor Real (R$)</th>
-                    <th className="py-3 px-4 text-right w-36">Diferença (R$)</th>
+                    <th className="py-3 px-4 text-right w-36">Valor Planejado ({currencySymbol})</th>
+                    <th className="py-3 px-4 text-right w-36">Valor Real ({currencySymbol})</th>
+                    <th className="py-3 px-4 text-right w-36">Diferença ({currencySymbol})</th>
                     <th className="py-3 px-4 text-center w-32">Status</th>
                     <th className="py-3 px-4 min-w-[200px]">Notas / Observações</th>
                     <th className="py-3 px-4 text-center w-12">Ação</th>
@@ -1437,7 +1438,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                       Total
                     </td>
                     <td className="py-1 px-1.5 text-right font-mono text-xs text-slate-900 bg-slate-100/30">
-                      R$ {totalVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {formatCurrency(totalVal, language)}
                     </td>
                   </tr>
                 </tbody>
@@ -1559,9 +1560,9 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
                       <thead>
                         <tr className="bg-slate-100/30 font-bold border-b border-black text-[11px] text-slate-800">
                           <th className="py-2 px-3 border-r border-black w-[25%]"></th>
-                          <th className="py-2 px-3 border-r border-black w-[25%] text-right">Goal (R$)</th>
-                          <th className="py-2 px-3 border-r border-black w-[25%] text-right">Actual (R$)</th>
-                          <th className="py-2 px-3 w-[25%] text-right">Difference (R$)</th>
+                          <th className="py-2 px-3 border-r border-black w-[25%] text-right">Goal ({currencySymbol})</th>
+                          <th className="py-2 px-3 border-r border-black w-[25%] text-right">Actual ({currencySymbol})</th>
+                          <th className="py-2 px-3 w-[25%] text-right">Difference ({currencySymbol})</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-black/60">

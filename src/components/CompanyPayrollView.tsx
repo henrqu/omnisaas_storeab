@@ -1044,7 +1044,7 @@ Fim do Relatório Corporativo
                           </div>
                         </td>
                         <td className="py-3 text-xs text-slate-350">{e.role}</td>
-                        <td className="py-3 font-semibold text-slate-200 text-xs">R$ {e.salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td className="py-3 font-semibold text-slate-200 text-xs">{formatCurrency(e.salary, language)}</td>
                         <td className="py-3">
                           <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
                             e.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
@@ -1687,14 +1687,14 @@ Fim do Relatório Corporativo
                   <div className="flex justify-between">
                     <span>Salário Base CLT</span>
                     <div className="flex space-x-8 text-right">
-                      <span className="text-slate-300 font-medium">R$ {selectedPayslip.base_salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-slate-300 font-medium">{formatCurrency(selectedPayslip.base_salary, language)}</span>
                       <span className="text-transparent">-</span>
                     </div>
                   </div>
                   <div className="flex justify-between">
                     <span>Gratificação por Desempenho</span>
                     <div className="flex space-x-8 text-right">
-                      <span className="text-emerald-400 font-medium">+R$ {selectedPayslip.bonuses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-emerald-400 font-medium">+{formatCurrency(selectedPayslip.bonuses, language)}</span>
                       <span className="text-transparent">-</span>
                     </div>
                   </div>
@@ -1702,7 +1702,7 @@ Fim do Relatório Corporativo
                     <span>Retenções de Imposto de Renda / INSS</span>
                     <div className="flex space-x-8 text-right">
                       <span className="text-transparent">-</span>
-                      <span className="text-rose-400 font-medium">-R$ {selectedPayslip.deductions.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-rose-400 font-medium">-{formatCurrency(selectedPayslip.deductions, language)}</span>
                     </div>
                   </div>
                 </div>
@@ -1711,7 +1711,7 @@ Fim do Relatório Corporativo
               {/* Totals */}
               <div className="border-t border-slate-800 pt-3 flex justify-between items-center text-sm font-bold bg-slate-950/20 p-3 rounded-xl">
                 <span className="text-white">Salário Líquido Creditado:</span>
-                <span className="text-emerald-400 text-base">R$ {selectedPayslip.net_pay.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span className="text-emerald-400 text-base">{formatCurrency(selectedPayslip.net_pay, language)}</span>
               </div>
 
               {/* Verification Info */}
@@ -1799,7 +1799,7 @@ Fim do Relatório Corporativo
                 </div>
                 <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-850">
                   <span className="text-slate-500 block uppercase font-mono text-[9px] mb-1">Salário Nominal</span>
-                  <span className="text-slate-200 font-bold">R$ {selectedEmployee.salary.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-slate-200 font-bold">{formatCurrency(selectedEmployee.salary, language)}</span>
                 </div>
                 <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-850">
                   <span className="text-slate-500 block uppercase font-mono text-[9px] mb-1">ID Único ERP</span>

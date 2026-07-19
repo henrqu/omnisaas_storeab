@@ -20,12 +20,14 @@ import {
 } from 'lucide-react';
 import { LocalDatabase } from '../utils/db';
 import { AiHistory } from '../types/schema';
+import { useLanguageTheme } from '../utils/i18n';
 
 interface AiCopilotViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
 }
 
 export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps) {
+  const { language } = useLanguageTheme();
   const [history, setHistory] = useState<AiHistory[]>([]);
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +78,11 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
         },
         body: JSON.stringify({
           prompt: cleanText,
-          systemInstruction: "Você é o Copiloto Vesta AI, o cérebro analítico do OmniSaaS ERP. Analise os dados providos com rigor científico, clareza executiva e dê recomendações financeiras, operacionais ou médicas concisas em português brasileiro."
+          systemInstruction: language.startsWith('pt') 
+            ? "Você é o Copiloto Vesta AI, o cérebro analítico do OmniSaaS ERP. Analise os dados providos com rigor científico, clareza executiva e dê recomendações financeiras, operacionais ou médicas concisas em português brasileiro."
+            : language.startsWith('es')
+            ? "Eres el Copiloto Vesta AI, el cerebro analítico de OmniSaaS ERP. Analiza los datos proporcionados con rigor científico, claridad ejecutiva y brinda recomendaciones financieras, operativas o médicas concisas en español."
+            : "You are the Vesta AI Copilot, the analytical brain of the OmniSaaS ERP. Analyze the provided data with scientific rigor, executive clarity, and give concise financial, operational, or medical recommendations in English."
         })
       });
 

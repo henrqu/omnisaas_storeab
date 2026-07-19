@@ -561,6 +561,9 @@ app.post("/api/stripe/create-checkout-session", async (req, res) => {
 // -------------------------------------------------------------
 
 async function startServer() {
+  // Serve public folder directly to ensure static assets are always accessible
+  app.use(express.static(path.join(process.cwd(), "public")));
+
   if (process.env.NODE_ENV !== "production") {
     // Development Mode
     const vite = await createViteServer({

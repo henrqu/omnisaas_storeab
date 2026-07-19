@@ -41,7 +41,8 @@ export default function CategoryDashboard({
   onAddTransaction,
   onDeleteTransaction
 }: CategoryDashboardProps) {
-  const { language } = useLanguageTheme();
+  const { language, currency } = useLanguageTheme();
+  const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
   
   // Local storage for Investment specifically for this category
   const [investAmount, setInvestAmount] = useState<number>(() => {
@@ -577,9 +578,9 @@ export default function CategoryDashboard({
 
               <form onSubmit={handleSaveInvestment} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Valor Alvo (R$)</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Valor Alvo ({currencySymbol})</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">R$</span>
+                    <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">{currencySymbol}</span>
                     <input 
                       type="number"
                       value={tempInvest}
@@ -675,9 +676,9 @@ export default function CategoryDashboard({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Valor (R$)</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Valor ({currencySymbol})</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2 text-slate-500 font-bold text-xs">R$</span>
+                      <span className="absolute left-3 top-2 text-slate-500 font-bold text-xs">{currencySymbol}</span>
                       <input 
                         type="number"
                         value={newItemAmount}

@@ -459,7 +459,7 @@ export default function PaycheckPlannerView() {
         - Pontuação de Saúde Financeira: ${financialHealthScore}/100
 
         Escreva de forma consultiva e encorajadora em 2 ou 3 frases, destacando se a proporção de gastos está saudável e indicando o melhor próximo passo financeiro de forma prática.
-        Idioma de resposta: ${language === 'pt' ? 'Português Brasileiro (pt-BR)' : 'Inglês (en-US)'}.
+        Idioma de resposta: ${language.startsWith('pt') ? 'Português Brasileiro (pt-BR)' : language.startsWith('es') ? 'Espanhol (es-ES)' : 'Inglês (en-US)'}.
       `;
 
       const response = await fetch('/api/chat', {
@@ -469,7 +469,11 @@ export default function PaycheckPlannerView() {
         },
         body: JSON.stringify({
           prompt: promptText,
-          systemInstruction: "Você é o Planejador Vesta AI. Faça análises curtas, extremamente estratégicas e encorajadoras sobre a distribuição de salários de seus usuários."
+          systemInstruction: language.startsWith('pt')
+            ? "Você é o Planejador Vesta AI. Faça análises curtas, extremamente estratégicas e encorajadoras sobre a distribuição de salários de seus usuários."
+            : language.startsWith('es')
+            ? "Eres el Planificador Vesta AI. Realiza análisis cortos, extremadamente estratégicos y alentadores sobre la distribución salarial de tus usuarios."
+            : "You are the Vesta AI Planner. Make short, highly strategic, and encouraging analyses of your users' salary distribution."
         })
       });
 
