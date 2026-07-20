@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLanguageTheme } from '../utils/i18n';
+import { useTranslation } from '../utils/i18n';
 const logoUrl = '/assets/images/logo.jpg';
 
 interface OmniSaaSLogoProps {
@@ -13,7 +13,7 @@ export default function OmniSaaSLogo({ className = '', showText = true, size = '
   // Use context to detect current theme safely
   let theme = 'dark';
   try {
-    const context = useLanguageTheme();
+    const context = useTranslation();
     theme = context?.theme || 'dark';
   } catch (e) {
     // Fallback if called outside provider

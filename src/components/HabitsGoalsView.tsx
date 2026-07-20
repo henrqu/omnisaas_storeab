@@ -24,6 +24,7 @@ import {
 import { LocalDatabase } from '../utils/db';
 import { Habit, Goal } from '../types/schema';
 import DailyPlannerView from './DailyPlannerView';
+import { useLanguageTheme } from '../utils/i18n';
 
 export interface HabitTrackerRow {
   category: string;
@@ -48,8 +49,9 @@ interface HabitsGoalsViewProps {
 }
 
 export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewProps) {
+  const { t, language } = useLanguageTheme();
   const [activeSubView, setActiveSubView] = useState<'standard' | 'habit-sheet' | 'daily-planner'>('standard');
-  const [trackerMonth, setTrackerMonth] = useState('Julho');
+  const [trackerMonth, setTrackerMonth] = useState(t('defaultMonth', 'Julho'));
   const [trackerYear, setTrackerYear] = useState('2026');
   const [trackerNotes, setTrackerNotes] = useState('');
   
@@ -99,7 +101,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
   const handleAddHabit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!habitName.trim()) {
-      setHabitError('Por favor, informe o nome do hábito.');
+      setHabitError(t('habitNameRequired', 'Por favor, informe o nome do hábito.'));
       return;
     }
     setHabitError('');
@@ -107,7 +109,11 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
     const newHabit = LocalDatabase.addHabit(habitName.trim(), habitFreq);
     setHabits(LocalDatabase.getHabits());
     setHabitName('');
-    onShowNotification('Hábito Cadastrado', `"${newHabit.name}" foi registrado com sucesso!`, 'success');
+    onShowNotification(
+      t('habitRegisteredTitle', 'Hábito Cadastrado'), 
+      t('habitRegisteredMessage', '"{name}" foi registrado com sucesso!').replace('{name}', newHabit.name), 
+      'success'
+    );
   };
 
   const handleToggleHabit = (id: string) => {
@@ -115,29 +121,37 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
     setHabits(updated);
     const target = updated.find(h => h.id === id);
     if (target?.last_completed) {
-      onShowNotification('Sensacional!', `Você completou o hábito "${target.name}". Streak de ${target.streak} dias!`, 'success');
+      onShowNotification(
+        t('habitCompletedCongratsTitle', 'Sensacional!'), 
+        t('habitCompletedCongratsMessage', 'Você completou o hábito "{name}". Streak de {streak} dias!').replace('{name}', target.name).replace('{streak}', String(target.streak)), 
+        'success'
+      );
     }
   };
 
   const handleDeleteHabit = (id: string, name: string) => {
     const updated = LocalDatabase.deleteHabit(id);
     setHabits(updated);
-    onShowNotification('Hábito Removido', `"${name}" foi apagado permanentemente.`, 'info');
+    onShowNotification(
+      t('habitDeletedTitle', 'Hábito Removido'), 
+      t('habitDeletedMessage', '"{name}" foi apagado permanentemente.').replace('{name}', name), 
+      'info'
+    );
   };
 
   const handleAddGoal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!goalName.trim()) {
-      setGoalError('O nome da meta é obrigatório.');
+      setGoalError(t('goalNameRequired', 'O nome da meta é obrigatório.'));
       return;
     }
     const targetNum = parseFloat(goalTarget);
     if (isNaN(targetNum) || targetNum <= 0) {
-      setGoalError('O valor alvo deve ser um número positivo.');
+      setGoalError(t('goalTargetInvalid', 'O valor alvo deve ser um número positivo.'));
       return;
     }
     if (!goalDeadline) {
-      setGoalError('Por favor, insira uma data limite de prazo.');
+      setGoalError(t('goalDeadlineRequired', 'Por favor, insira uma data limite de prazo.'));
       return;
     }
     setGoalError('');
@@ -155,13 +169,21 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
     setGoalName('');
     setGoalTarget('');
     setGoalDeadline('');
-    onShowNotification('Objetivo Criado', `Meta "${newGoal.name}" estabelecida com sucesso!`, 'success');
+    onShowNotification(
+      t('goalCreatedTitle', 'Objetivo Criado'), 
+      t('goalCreatedMessage', 'Meta "{name}" estabelecida com sucesso!').replace('{name}', newGoal.name), 
+      'success'
+    );
   };
 
   const handleUpdateGoalVal = (id: string) => {
     const val = parseFloat(goalNewValue);
     if (isNaN(val) || val < 0) {
-      onShowNotification('Erro de Validação', 'Informe um valor numérico positivo ou zero.', 'warning');
+      onShowNotification(
+        t('goalProgressInvalidTitle', 'Erro de Validação'), 
+        t('invalidNumberValue', 'Informe um valor numérico positivo ou zero.'), 
+        'warning'
+      );
       return;
     }
 
@@ -172,16 +194,28 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
 
     const matched = updated.find(g => g.id === id);
     if (matched && matched.status === 'completed') {
-      onShowNotification('Meta Atingida! 🏆', `Parabéns! Você alcançou o objetivo "${matched.name}"!`, 'success');
+      onShowNotification(
+        t('goalAchievedTitle', 'Meta Atingida! 🏆'), 
+        t('goalAchievedMessage', 'Parabéns! Você alcançou o objetivo "{name}"!').replace('{name}', matched.name), 
+        'success'
+      );
     } else {
-      onShowNotification('Progresso Salvo', `Progresso de "${matched?.name}" atualizado para ${val}.`, 'success');
+      onShowNotification(
+        t('goalProgressSavedTitle', 'Progresso Salvo'), 
+        t('goalProgressSavedMessage', 'Progresso de "{name}" atualizado para {val}.').replace('{name}', matched?.name || '').replace('{val}', String(val)), 
+        'success'
+      );
     }
   };
 
   const handleDeleteGoal = (id: string, name: string) => {
     const updated = LocalDatabase.deleteGoal(id);
     setGoals(updated);
-    onShowNotification('Meta Cancelada', `"${name}" foi excluída.`, 'info');
+    onShowNotification(
+      t('goalCancelledTitle', 'Meta Cancelada'), 
+      t('goalCancelledMessage', '"{name}" foi excluída.').replace('{name}', name), 
+      'info'
+    );
   };
 
   const handlePrintHabitTracker = (month: string, year: string, grid: HabitTrackerRow[], notes: string) => {
@@ -360,8 +394,8 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
         return { ...row, days };
       });
     });
-    setTrackerNotes('Foco absoluto este mês! Excelente progresso na leitura diária e hidratação.');
-    onShowNotification('Sucesso', 'Dados preenchidos para visualização!', 'success');
+    setTrackerNotes(t('prefillNotesText', 'Foco absoluto este mês! Excelente progresso na leitura diária e hidratação.'));
+    onShowNotification(t('success', 'Sucesso'), t('prefillDataSuccess', 'Dados preenchidos para visualização!'), 'success');
   };
 
   return (
@@ -379,7 +413,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
           id="tab-btn-standard-habits"
         >
           <Flame className="w-3.5 h-3.5 text-orange-400" />
-          <span>Controle de Metas & Rotina</span>
+          <span>{t('habitsGoalsTab', 'Controle de Metas & Rotina')}</span>
         </button>
 
         <button 
@@ -392,7 +426,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
           id="tab-btn-sheet-habits"
         >
           <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Folha Habit Tracker Impressa</span>
+          <span>{t('habitsSheetTab', 'Folha Habit Tracker Impressa')}</span>
         </button>
 
         <button 
@@ -405,7 +439,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
           id="tab-btn-daily-planner"
         >
           <Calendar className="w-3.5 h-3.5 text-pink-400" />
-          <span className="flex items-center">Hábitos Diários <span className="ml-1 text-[9px] bg-indigo-950 text-indigo-400 border border-indigo-800 px-1.5 py-0.2 rounded font-mono font-bold">20 Seções</span></span>
+          <span className="flex items-center">{t('habitsDailyTab', 'Hábitos Diários')} <span className="ml-1 text-[9px] bg-indigo-950 text-indigo-400 border border-indigo-800 px-1.5 py-0.2 rounded font-mono font-bold">20 Seções</span></span>
         </button>
       </div>
 
@@ -421,12 +455,14 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                 <div>
                   <h2 className="text-lg font-bold text-white tracking-tight flex items-center">
                     <Flame className="w-5 h-5 mr-1.5 text-orange-500 fill-orange-500/20" />
-                    Seus Hábitos de Performance
+                    {t('habitsPerfTitle', 'Seus Hábitos de Performance')}
                   </h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Construa disciplina diária com metas de repetição constante.</p>
+                  <p className="text-slate-400 text-xs mt-0.5">{t('habitsPerfDesc', 'Construa disciplina diária com metas de repetição constante.')}</p>
                 </div>
                 <span className="bg-indigo-950 border border-indigo-800 text-indigo-300 text-xs font-semibold px-2.5 py-1 rounded-full">
-                  {habits.filter(h => h.last_completed === new Date().toISOString().split('T')[0]).length} de {habits.length} feitos hoje
+                  {t('habitsProgressToday', '{count} de {total} feitos hoje')
+                    .replace('{count}', String(habits.filter(h => h.last_completed === new Date().toISOString().split('T')[0]).length))
+                    .replace('{total}', String(habits.length))}
                 </span>
               </div>
 
@@ -460,7 +496,9 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                           <p className={`text-sm font-semibold tracking-tight truncate max-w-[200px] md:max-w-md ${isCompleted ? 'line-through text-slate-500' : 'text-slate-200'}`}>
                             {habit.name}
                           </p>
-                          <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{habit.frequency === 'daily' ? 'Diário' : 'Semanal'}</span>
+                          <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">
+                            {habit.frequency === 'daily' ? t('daily', 'Diário') : t('weekly', 'Semanal')}
+                          </span>
                         </div>
                       </div>
 
@@ -475,7 +513,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                         <button 
                           onClick={() => handleDeleteHabit(habit.id, habit.name)}
                           className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800/60 transition"
-                          title="Excluir hábito"
+                          title={t('deleteHabitTooltip', 'Excluir hábito')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -487,8 +525,8 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                 {habits.length === 0 && (
                   <div className="text-center py-12 border border-dashed border-slate-800 rounded-2xl bg-slate-900/10">
                     <FolderHeart className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <h3 className="text-sm font-bold text-slate-300">Nenhum hábito cadastrado</h3>
-                    <p className="text-slate-500 text-xs mt-1">Crie hábitos saudáveis ao lado para iniciar seu acompanhamento diário.</p>
+                    <h3 className="text-sm font-bold text-slate-300">{t('habitsEmptyTitle', 'Nenhum hábito cadastrado')}</h3>
+                    <p className="text-slate-500 text-xs mt-1">{t('habitsEmptyDesc', 'Crie hábitos saudáveis ao lado para iniciar seu acompanhamento diário.')}</p>
                   </div>
                 )}
               </div>
@@ -498,13 +536,13 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
             <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5" id="habits-form-panel">
               <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
                 <PlusCircle className="w-4 h-4 mr-1.5 text-indigo-400" />
-                Adicionar Novo Hábito
+                {t('addNewHabitTitle', 'Adicionar Novo Hábito')}
               </h3>
               <form onSubmit={handleAddHabit} className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
                   <input 
                     type="text" 
-                    placeholder="Ex: Ler 15 páginas, Fazer ioga, Codar..." 
+                    placeholder={t('habitNamePlaceholder', 'Ex: Ler 15 páginas, Fazer ioga, Codar...')} 
                     value={habitName}
                     onChange={(e) => setHabitName(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
@@ -517,8 +555,8 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                     onChange={(e) => setHabitFreq(e.target.value as 'daily' | 'weekly')}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
                   >
-                    <option value="daily">Repetição Diária</option>
-                    <option value="weekly">Semanal</option>
+                    <option value="daily">{t('dailyRepetition', 'Repetição Diária')}</option>
+                    <option value="weekly">{t('weekly', 'Semanal')}</option>
                   </select>
                 </div>
                 <button 
@@ -527,7 +565,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                   id="submit-habit-btn"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Salvar</span>
+                  <span>{t('saveBtn', 'Salvar')}</span>
                 </button>
               </form>
               {habitError && (
@@ -548,27 +586,27 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
               <div>
                 <h2 className="text-sm font-bold text-white tracking-tight flex items-center">
                   <Target className="w-4 h-4 mr-1.5 text-indigo-400" />
-                  Estipular Meta Estratégica
+                  {t('goalsAddTitle', 'Estipular Meta Estratégica')}
                 </h2>
-                <p className="text-slate-400 text-[11px] mt-0.5">Defina alvos mensuráveis com prazos reais.</p>
+                <p className="text-slate-400 text-[11px] mt-0.5">{t('goalsAddDesc', 'Defina alvos mensuráveis com prazos reais.')}</p>
               </div>
 
               <form onSubmit={handleAddGoal} className="space-y-4 mt-4">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nome do Objetivo</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('goalNameLabel', 'Nome do Objetivo')}</label>
                   <input 
                     type="text"
-                    placeholder="Ex: Atingir R$ 20k de MRR"
+                    placeholder={t('goalNamePlaceholder', 'Ex: Atingir R$ 20k de MRR')}
                     value={goalName}
                     onChange={(e) => setGoalName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500"
                     id="input-goal-name"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor Alvo</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('goalTargetLabel', 'Valor Alvo')}</label>
                     <input 
                       type="number"
                       placeholder="20000"
@@ -578,7 +616,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Unidade</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('goalUnitLabel', 'Unidade')}</label>
                     <input 
                       type="text"
                       placeholder="R$, kg, km"
@@ -591,20 +629,20 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Categoria</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('goalCategoryLabel', 'Categoria')}</label>
                     <select 
                       value={goalCategory}
                       onChange={(e) => setGoalCategory(e.target.value as any)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
-                      <option value="business">Corporativo</option>
-                      <option value="financial">Financeiro</option>
-                      <option value="fitness">Fitness / Saúde</option>
-                      <option value="personal">Pessoal</option>
+                      <option value="business">{t('business', 'Corporativo')}</option>
+                      <option value="financial">{t('financial', 'Financeiro')}</option>
+                      <option value="fitness">{t('fitness', 'Fitness / Saúde')}</option>
+                      <option value="personal">{t('personal', 'Pessoal')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Prazo Limite</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('goalDeadlineLabel', 'Prazo Limite')}</label>
                     <input 
                       type="date"
                       value={goalDeadline}
@@ -619,7 +657,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 rounded-xl transition"
                   id="submit-goal-btn"
                 >
-                  Criar Meta
+                  {t('goalsSubmitBtn', 'Criar Meta')}
                 </button>
 
                 {goalError && (
@@ -635,7 +673,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
             <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 space-y-4" id="goals-list-panel">
               <h2 className="text-sm font-bold text-white tracking-tight flex items-center">
                 <Award className="w-4 h-4 mr-1.5 text-emerald-400" />
-                Seus Objetivos Ativos
+                {t('goalsActiveTitle', 'Seus Objetivos Ativos')}
               </h2>
 
               <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
@@ -648,7 +686,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                         <div className="truncate pr-2">
                           <p className={`text-xs font-bold text-slate-200 truncate ${isFinished ? 'line-through text-slate-500' : ''}`} title={g.name}>{g.name}</p>
                           <span className="text-[9px] bg-slate-800/80 text-slate-400 border border-slate-700/50 px-2 py-0.5 rounded-full capitalize mt-1 inline-block">
-                            {g.category}
+                            {t(g.category, g.category)}
                           </span>
                         </div>
                         <button 
@@ -662,7 +700,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                       {/* Progress bar */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-[10px] text-slate-400">
-                          <span>Progresso: {progress.toFixed(0)}%</span>
+                          <span>{t('goalProgressRatio', 'Progresso: {ratio}%').replace('{ratio}', progress.toFixed(0))}</span>
                           <span>{g.current_value} / {g.target_value} {g.unit}</span>
                         </div>
                         <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -677,7 +715,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                       <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800/50">
                         <span className="flex items-center">
                           <Clock className="w-3 h-3 mr-0.5 text-slate-600" />
-                          Prazo: {g.deadline}
+                          {t('goalDeadlineText', 'Prazo: {date}').replace('{date}', g.deadline)}
                         </span>
                         
                         {adjustingGoalId === g.id ? (
@@ -705,7 +743,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                             className="text-indigo-405 hover:text-indigo-300 font-semibold"
                             id={`goal-adjust-btn-${g.id}`}
                           >
-                            Ajustar Valor
+                            {t('goalAdjustBtn', 'Ajustar Valor')}
                           </button>
                         )}
                       </div>
@@ -714,7 +752,7 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                 })}
 
                 {goals.length === 0 && (
-                  <p className="text-xs text-slate-500 text-center py-6">Nenhum objetivo ativo estabelecido.</p>
+                  <p className="text-xs text-slate-500 text-center py-6">{t('goalsEmptyTitle', 'Nenhum objetivo ativo estabelecido.')}</p>
                 )}
               </div>
             </div>
@@ -728,9 +766,9 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-in" id="habit-sheet-view">
           {/* Sidebar Controller */}
           <div className="xl:col-span-1 bg-slate-900/30 border border-slate-800 rounded-2xl p-4 h-fit">
-            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">Folha Habit Tracker</h3>
+            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">{t('habitSheetTitle', 'Folha Habit Tracker')}</h3>
             <p className="text-slate-400 text-xs mb-4">
-              Gerencie seus hábitos diários em uma grade de 31 dias. Clique em cada dia para preencher sua bolinha de conclusão.
+              {t('habitSheetDesc', 'Gerencie seus hábitos diários em uma grade de 31 dias. Clique em cada dia para preencher sua bolinha de conclusão.')}
             </p>
             
             <div className="space-y-2 pt-3 border-t border-slate-800/80">
@@ -739,30 +777,30 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                 className="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition"
               >
                 <Printer className="w-4 h-4 text-emerald-405" />
-                <span>Imprimir Folha / PDF</span>
+                <span>{t('printSheetBtn', 'Imprimir Folha / PDF')}</span>
               </button>
               
               <button
                 onClick={handlePrefillTracker}
                 className="w-full bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-slate-300 text-xs font-semibold py-2 px-3 rounded-xl transition"
               >
-                Preencher Amostra
+                {t('prefillSampleBtn', 'Preencher Amostra')}
               </button>
 
               <button
                 onClick={() => {
-                  if (confirm('Tem certeza de que deseja resetar toda a sua folha de hábitos?')) {
+                  if (confirm(t('confirmResetGrid', 'Tem certeza de que deseja resetar toda a sua folha de hábitos?'))) {
                     setTrackerGrid(HABIT_TRACKER_CATEGORIES.map(cat => ({
                       category: cat,
                       days: Array.from({ length: 31 }, () => false)
                     })));
                     setTrackerNotes('');
-                    onShowNotification('Sucesso', 'Grade de hábitos resetada!', 'info');
+                    onShowNotification(t('success', 'Sucesso'), t('gridResetSuccess', 'Grade de hábitos resetada!'), 'info');
                   }
                 }}
                 className="w-full bg-slate-950 hover:bg-slate-900 text-rose-400 border border-rose-500/10 hover:border-rose-500/20 text-xs font-medium py-2 px-3 rounded-xl transition"
               >
-                Limpar Grade
+                {t('clearGridBtn', 'Limpar Grade')}
               </button>
             </div>
           </div>
@@ -807,11 +845,11 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
                   <table className="w-full text-center border-collapse text-xs">
                     <thead>
                       <tr className="bg-slate-200/50 border-b border-black text-[10px] font-sans font-bold uppercase tracking-wider">
-                        <th className="py-2 px-3 border-r border-black text-left w-[18%]">Hábito / Categoria</th>
+                        <th className="py-2 px-3 border-r border-black text-left w-[18%]">{t('habitCategoryHeader', 'Hábito / Categoria')}</th>
                         {Array.from({ length: 31 }).map((_, d) => (
                           <th key={d} className="border-r border-black font-sans font-bold w-[2.2%] text-center">{d + 1}</th>
                         ))}
-                        <th className="py-2 px-1 text-center w-[6%]">Total</th>
+                        <th className="py-2 px-1 text-center w-[6%]">{t('total', 'Total')}</th>
                         <th className="py-2 px-1 text-center w-[8%]">%</th>
                       </tr>
                     </thead>
@@ -854,13 +892,13 @@ export default function HabitsGoalsView({ onShowNotification }: HabitsGoalsViewP
               {/* Lined Notes section at the bottom */}
               <div className="mt-8 border-t border-black/30 pt-6">
                 <label className="block text-xs font-sans font-bold text-black uppercase tracking-wider mb-2">
-                  Notes & Reflection (Anotações e Reflexões)
+                  {t('notesReflection', 'Notes & Reflection (Anotações e Reflexões)')}
                 </label>
                 <textarea
                   value={trackerNotes}
                   onChange={(e) => setTrackerNotes(e.target.value)}
                   className="w-full bg-transparent border border-black rounded-sm p-4 text-xs font-serif leading-relaxed text-slate-900 focus:outline-none focus:bg-white"
-                  placeholder="Escreva suas reflexões, metas e aprendizados do mês aqui..."
+                  placeholder={t('notesReflectionPlaceholder', 'Escreva suas reflexões, metas e aprendizados do mês aqui...')}
                   rows={4}
                 />
               </div>

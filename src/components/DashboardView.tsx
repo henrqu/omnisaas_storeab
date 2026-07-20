@@ -20,6 +20,7 @@ import {
   Sparkles,
   Search
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { LocalDatabase } from '../utils/db';
 import { Transaction, Goal, Habit, Inventory, Employee, Product } from '../types/schema';
 import { useLanguageTheme, formatCurrency } from '../utils/i18n';
@@ -196,7 +197,7 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
             }}
             className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs text-slate-400 hover:text-white font-semibold"
           >
-            Clear
+            {t('clearBtn', 'Limpar')}
           </button>
         )}
 
@@ -467,7 +468,7 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
                       <p className="text-xs font-semibold text-slate-200">{e.full_name}</p>
                       <p className="text-[10px] text-slate-500">{e.role} • {e.department}</p>
                     </div>
-                    <span className="text-[9px] bg-cyan-950 text-cyan-400 border border-cyan-800/30 px-2 py-0.5 rounded">Colaborador</span>
+                    <span className="text-[9px] bg-cyan-950 text-cyan-400 border border-cyan-800/30 px-2 py-0.5 rounded">{t('employeeLabel', 'Colaborador')}</span>
                   </div>
                 ))}
                 {filteredProducts.map(p => (
@@ -476,7 +477,7 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
                       <p className="text-xs font-semibold text-slate-200">{p.name}</p>
                       <p className="text-[10px] text-slate-500">SKU: {p.sku} • {formatCurrency(p.price, language)}</p>
                     </div>
-                    <span className="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-2 py-0.5 rounded">Produto</span>
+                    <span className="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800/30 px-2 py-0.5 rounded">{t('productLabel', 'Produto')}</span>
                   </div>
                 ))}
                 {filteredEmployees.length === 0 && filteredProducts.length === 0 && (
@@ -491,11 +492,20 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
           {/* Grid de Métricas Principais */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-metrics-grid">
         {/* Card Saldo Líquido */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/30 transition shadow-sm" id="metric-balance">
-          <div className="flex justify-between items-start">
+        <motion.div 
+          drag
+          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+          dragElastic={0.4}
+          whileDrag={{ scale: 1.05, rotate: 1.5, zIndex: 10 }}
+          whileHover={{ scale: 1.02 }}
+          style={{ touchAction: 'none' }}
+          className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/30 transition shadow-sm cursor-grab active:cursor-grabbing touch-none select-none" 
+          id="metric-balance"
+        >
+          <div className="flex justify-between items-start pointer-events-none">
             <div>
               <p className="text-slate-400 text-xs font-medium">{t('monthlyNetBalance', 'Saldo Líquido Mensal')}</p>
-              <h3 className="text-2xl font-bold text-white tracking-tight mt-1">
+              <h3 className="text-2xl font-bold text-white tracking-tight mt-1 number-auto-shrink">
                 {formatCurrency(netBalance, language)}
               </h3>
             </div>
@@ -503,21 +513,30 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 mt-3 text-xs">
+          <div className="flex items-center space-x-1.5 mt-3 text-xs pointer-events-none">
             <span className={`font-semibold flex items-center ${netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {netBalance >= 0 ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
               {(((totalIncome - totalExpense) / (totalIncome || 1)) * 100).toFixed(1)}%
             </span>
             <span className="text-slate-500">{t('netMargin', 'margem líquida')}</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Card Faturamento Bruto */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-emerald-500/30 transition shadow-sm" id="metric-income">
-          <div className="flex justify-between items-start">
+        <motion.div 
+          drag
+          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+          dragElastic={0.4}
+          whileDrag={{ scale: 1.05, rotate: -1.5, zIndex: 10 }}
+          whileHover={{ scale: 1.02 }}
+          style={{ touchAction: 'none' }}
+          className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-emerald-500/30 transition shadow-sm cursor-grab active:cursor-grabbing touch-none select-none" 
+          id="metric-income"
+        >
+          <div className="flex justify-between items-start pointer-events-none">
             <div>
               <p className="text-slate-400 text-xs font-medium">{t('grossRevenue', 'Receita Bruta (Entradas)')}</p>
-              <h3 className="text-2xl font-bold text-white tracking-tight mt-1">
+              <h3 className="text-2xl font-bold text-white tracking-tight mt-1 number-auto-shrink">
                 {formatCurrency(totalIncome, language)}
               </h3>
             </div>
@@ -525,18 +544,27 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 mt-3 text-xs">
+          <div className="flex items-center space-x-1.5 mt-3 text-xs pointer-events-none">
             <span className="text-emerald-400 font-semibold">+{formatCurrency(totalIncome * 0.1, language)}</span>
             <span className="text-slate-500">{t('thisWeekEst', 'esta semana (est.)')}</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Card Colaboradores Ativos */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-cyan-500/30 transition shadow-sm" id="metric-employees">
-          <div className="flex justify-between items-start">
+        <motion.div 
+          drag
+          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+          dragElastic={0.4}
+          whileDrag={{ scale: 1.05, rotate: 1.2, zIndex: 10 }}
+          whileHover={{ scale: 1.02 }}
+          style={{ touchAction: 'none' }}
+          className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-cyan-500/30 transition shadow-sm cursor-grab active:cursor-grabbing touch-none select-none" 
+          id="metric-employees"
+        >
+          <div className="flex justify-between items-start pointer-events-none">
             <div>
               <p className="text-slate-400 text-xs font-medium">{t('erpEmployees', 'Colaboradores ERP')}</p>
-              <h3 className="text-2xl font-bold text-white tracking-tight mt-1">
+              <h3 className="text-2xl font-bold text-white tracking-tight mt-1 number-auto-shrink">
                 {activeEmployeesCount} {t('activeEmployees', 'Ativos')}
               </h3>
             </div>
@@ -544,18 +572,27 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 mt-3 text-xs">
+          <div className="flex items-center space-x-1.5 mt-3 text-xs pointer-events-none">
             <span className="text-slate-400 font-semibold">100%</span>
             <span className="text-slate-500">{t('retentionRate', 'taxa de retenção')}</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Card Hábitos & Estilo de Vida */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-orange-500/30 transition shadow-sm" id="metric-habits">
-          <div className="flex justify-between items-start">
+        <motion.div 
+          drag
+          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+          dragElastic={0.4}
+          whileDrag={{ scale: 1.05, rotate: -1.2, zIndex: 10 }}
+          whileHover={{ scale: 1.02 }}
+          style={{ touchAction: 'none' }}
+          className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-orange-500/30 transition shadow-sm cursor-grab active:cursor-grabbing touch-none select-none" 
+          id="metric-habits"
+        >
+          <div className="flex justify-between items-start pointer-events-none">
             <div>
               <p className="text-slate-400 text-xs font-medium">{t('habitFidelity', 'Fidelidade aos Hábitos')}</p>
-              <h3 className="text-2xl font-bold text-white tracking-tight mt-1">
+              <h3 className="text-2xl font-bold text-white tracking-tight mt-1 number-auto-shrink">
                 {habitsCompletedToday} / {habits.length} {t('today', 'Hoje')}
               </h3>
             </div>
@@ -563,14 +600,14 @@ export default function DashboardView({ onNavigate, onShowNotification }: Dashbo
               <Flame className="w-5 h-5" />
             </div>
           </div>
-          <div className="flex items-center space-x-1.5 mt-3 text-xs">
+          <div className="flex items-center space-x-1.5 mt-3 text-xs pointer-events-none">
             <span className="text-orange-400 font-semibold flex items-center">
               <Flame className="w-3.5 h-3.5 mr-0.5 fill-orange-400" />
               {t('bestStreak', 'Melhor streak')}: 12 {language === 'en' ? 'days' : language === 'es' ? 'días' : 'dias'}
             </span>
-            <span className="text-slate-500">streak atual</span>
+            <span className="text-slate-500">{t('currentStreak', 'streak atual')}</span>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Grid de Seções Operacionais */}

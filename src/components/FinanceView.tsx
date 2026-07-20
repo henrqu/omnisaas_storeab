@@ -760,7 +760,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           id="tab-btn-transactions"
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>Extrato de Transações</span>
+          <span>{t('transactionsStatement', 'Extrato de Transações')}</span>
         </button>
 
         <button 
@@ -773,7 +773,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           id="tab-btn-budgets"
         >
           <PieChart className="w-3.5 h-3.5" />
-          <span>Orçamentos de Categoria</span>
+          <span>{t('categoryBudgets', 'Orçamentos de Categoria')}</span>
         </button>
 
         <button 
@@ -786,7 +786,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           id="tab-btn-excel-budget"
         >
           <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Planilha Orçamentária Excel (I Love Mi)</span>
+          <span>{t('excelBudget', 'Planilha Orçamentária Excel (I Love Mi)')}</span>
         </button>
 
         <button 
@@ -799,7 +799,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           id="tab-btn-planner-universal"
         >
           <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Planner Universal</span>
+          <span>{t('plannerUniversal', 'Planner Universal')}</span>
         </button>
 
         <button 
@@ -812,7 +812,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           id="tab-btn-paycheck-planner"
         >
           <BrainCircuit className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Paycheck Planner (IA)</span>
+          <span>{t('paycheckPlanner', 'Paycheck Planner (IA)')}</span>
         </button>
       </div>
 
@@ -824,7 +824,7 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 h-fit" id="transaction-form-panel">
             <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
               <PlusCircle className="w-4 h-4 mr-1.5 text-indigo-400" />
-              Lançar Movimentação Financeira
+              {t('addTransaction', 'Lançar Movimentação Financeira')}
             </h3>
 
             <form onSubmit={handleAddTransaction} className="space-y-4">

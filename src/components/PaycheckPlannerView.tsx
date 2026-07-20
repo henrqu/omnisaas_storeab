@@ -68,7 +68,8 @@ export function getSectionIcon(id: string) {
 }
 
 export default function PaycheckPlannerView() {
-  const { t, language } = useLanguageTheme();
+  const { t, language: rawLanguage } = useLanguageTheme();
+  const language = rawLanguage.startsWith('pt') ? 'pt' : rawLanguage.startsWith('es') ? 'es' : 'en';
 
   // Local storage state keys
   const STORAGE_KEY_SECTIONS = 'omnisaas_paycheck_sections';

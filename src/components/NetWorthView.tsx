@@ -465,7 +465,7 @@ export default function NetWorthView({ onShowNotification }: { onShowNotificatio
             <div className="bg-slate-950 border border-indigo-500/20 p-5 rounded-2xl flex flex-col justify-between shadow-lg shadow-indigo-500/5" id="card-net-worth">
               <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Patrimônio Líquido</span>
               <div className="mt-2.5">
-                <span className="text-2xl font-black text-indigo-300 font-mono">{formatCurrency(netWorthValue, language)}</span>
+                <span className="text-2xl font-black text-indigo-300 font-mono number-auto-shrink block">{formatCurrency(netWorthValue, language)}</span>
                 <span className="text-[10px] text-emerald-400 font-bold block mt-1 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-0.5" />
                   Riqueza Real Consolidada

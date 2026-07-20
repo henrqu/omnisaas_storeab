@@ -113,6 +113,8 @@ export default function App() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
   
   const [profile, setProfile] = useState<Profile | null>(null);
+  const loggedInEmail = localStorage.getItem('omnisaas_logged_in_email') || profile?.email || '';
+  const isOwner = loggedInEmail.trim().toLowerCase() === 'lacasaking.agency@gmail.com';
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   
@@ -150,6 +152,21 @@ export default function App() {
 
   const [isCheckingSupabase, setIsCheckingSupabase] = useState<boolean>(false);
 
+  // Accent color state with dynamic synchronization
+  const [accent, setAccentState] = useState<string>(() => {
+    return localStorage.getItem('omnisaas_accent') || 'blue';
+  });
+
+  const setAccent = (color: string) => {
+    setAccentState(color);
+    localStorage.setItem('omnisaas_accent', color);
+    document.documentElement.setAttribute('data-accent', color);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-accent', accent);
+  }, [accent]);
+
   const handleSaveSupabaseCredentials = async () => {
     const trimmedUrl = supabaseUrlInput.trim();
     const trimmedKey = supabaseAnonKeyInput.trim();
@@ -157,8 +174,8 @@ export default function App() {
     localStorage.setItem('omnisaas_supabase_anon_key', trimmedKey);
     
     handleShowNotification(
-      language === 'pt' ? 'Salvando Credenciais' : 'Saving Credentials',
-      language === 'pt' ? 'Testando conexão com o Supabase...' : 'Testing connection to Supabase...',
+      language.startsWith('pt') ? 'Salvando Credenciais' : 'Saving Credentials',
+      language.startsWith('pt') ? 'Testando conexão com o Supabase...' : 'Testing connection to Supabase...',
       'info'
     );
     
@@ -178,7 +195,7 @@ export default function App() {
           configured: true,
           connected: false,
           tablesExist: false,
-          message: language === 'pt' 
+          message: language.startsWith('pt') 
             ? 'Servidor de APIs retornou um erro ou formato inválido.' 
             : 'API server returned an error or invalid format.'
         });
@@ -189,13 +206,13 @@ export default function App() {
       
       if (data.connected) {
         handleShowNotification(
-          language === 'pt' ? 'Supabase Conectado' : 'Supabase Connected',
+          language.startsWith('pt') ? 'Supabase Conectado' : 'Supabase Connected',
           data.message,
           'success'
         );
       } else if (data.configured) {
         handleShowNotification(
-          language === 'pt' ? 'Falha na Conexão' : 'Connection Failed',
+          language.startsWith('pt') ? 'Falha na Conexão' : 'Connection Failed',
           data.message,
           'warning'
         );
@@ -210,7 +227,7 @@ export default function App() {
         message: err.message || String(err)
       });
       handleShowNotification(
-        language === 'pt' ? 'Erro de Conexão' : 'Connection Error',
+        language.startsWith('pt') ? 'Erro de Conexão' : 'Connection Error',
         err.message || String(err),
         'warning'
       );
@@ -700,7 +717,7 @@ export default function App() {
 
         {/* MOBILE MENU DROPDOWN */}
         {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-x-0 top-[53px] bg-slate-900/95 backdrop-blur border-b border-slate-800 z-30 flex flex-col p-4 space-y-1" id="mobile-menu-dropdown">
+          <div className="md:hidden fixed inset-x-0 top-[53px] max-h-[calc(100vh-53px)] overflow-y-auto bg-slate-900/95 backdrop-blur border-b border-slate-800 z-30 flex flex-col p-4 space-y-1 shadow-2xl" id="mobile-menu-dropdown">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -711,11 +728,113 @@ export default function App() {
                 className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs font-semibold ${
                   activeView === item.id ? 'bg-white/10 text-white border border-white/10' : 'text-slate-400 hover:text-slate-200'
                 }`}
+                style={{ minHeight: '44px' }}
               >
                 {item.icon}
                 <span>{item.label}</span>
               </button>
             ))}
+
+            {/* Divider */}
+            <div className="border-t border-white/10 my-2 pt-2" />
+            
+            {/* Mobile Profile & Quick Settings Panel */}
+            <div className="p-3 bg-slate-950/60 rounded-xl border border-white/5 space-y-3">
+              {/* User Avatar & Name */}
+              <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                <div className="flex items-center space-x-2.5">
+                  <img 
+                    src={profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'} 
+                    alt="Avatar" 
+                    className="w-8 h-8 rounded-lg object-cover border border-emerald-500/30"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-white leading-none">{profile?.full_name || 'Usuário'}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{profile?.email || 'user@omnisaas.com'}</p>
+                  </div>
+                </div>
+                
+                {/* Theme Switcher Button */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/15 text-slate-400 hover:text-white transition flex items-center justify-center"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  title="Alterar Tema"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-amber-400" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-indigo-400" />
+                  )}
+                </button>
+              </div>
+
+              {/* Language Selector for Mobile */}
+              <div className="space-y-1.5">
+                <div className="flex items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                  <Globe className="w-3.5 h-3.5 text-slate-400 mr-1" />
+                  <span>{t('languageLabel', 'Idioma')}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { code: 'pt-BR', name: 'Português', sub: 'BR' },
+                    { code: 'en-US', name: 'English', sub: 'US' },
+                    { code: 'es', name: 'Español', sub: 'ES' }
+                  ].map(langOption => {
+                    const isSelected = language === langOption.code || (langOption.code === 'pt-BR' && language === 'pt') || (langOption.code === 'en-US' && language === 'en');
+                    return (
+                      <button
+                        key={langOption.code}
+                        onClick={() => {
+                          const code = langOption.code as Language;
+                          setLanguage(code);
+                          const alignedCurrency = code.startsWith('pt') ? 'BRL' : code.startsWith('es') ? 'EUR' : 'USD';
+                          setCurrency(alignedCurrency as Currency);
+                        }}
+                        className={`py-2 rounded-lg text-xs font-bold border transition flex flex-col items-center justify-center ${
+                          isSelected 
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-extrabold' 
+                            : 'bg-white/5 text-slate-400 border-white/5 hover:text-slate-300'
+                        }`}
+                        style={{ minHeight: '44px' }}
+                      >
+                        <span className="text-[10px]">{langOption.name}</span>
+                        <span className="text-[8px] opacity-60 font-mono mt-0.5">{langOption.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Profile & Logout Buttons */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    setActiveView('profile');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 py-2.5 bg-white/5 hover:bg-white/10 text-slate-200 border border-white/5 rounded-lg text-xs font-semibold"
+                  style={{ minHeight: '44px' }}
+                >
+                  <User className="w-4 h-4 text-emerald-450" />
+                  <span>{t('profile', 'Perfil')}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsLoggedIn(false);
+                    localStorage.setItem('omnisaas_logged_in', 'false');
+                    localStorage.removeItem('omnisaas_logged_in_email');
+                    handleShowNotification(t('logout', 'Fazer Logout'), t('logoutSuccess', 'Logout realizado com sucesso.'), 'info');
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 py-2.5 bg-rose-500/10 hover:bg-rose-500/15 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-semibold"
+                  style={{ minHeight: '44px' }}
+                >
+                  <LogOut className="w-4 h-4 text-rose-400" />
+                  <span>{t('logout', 'Sair')}</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -878,18 +997,65 @@ export default function App() {
             </div>
           </header>
 
-          {/* CONTAINER DINÂMICO DE VIEWS */}
-          <div className="flex-1 p-4 md:p-8 animate-fade-in" id="active-workspace-wrapper">
+          {/* CONTAINER DINÂMICO DE VIEWS COM SUPORTE A SWIPE GESTURES */}
+          <motion.div 
+            className="flex-1 p-4 md:p-8 overflow-x-hidden" 
+            id="active-workspace-wrapper" 
+            key={`${activeView}-${language}`}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.3}
+            style={{ touchAction: 'pan-y' }}
+            onDragEnd={(event, info) => {
+              // Only trigger slide transition if horizontal swipe is substantial
+              const swipeThreshold = 100;
+              if (info.offset.x < -swipeThreshold) {
+                // Swiped Left -> next tab
+                const currentIndex = navItems.findIndex(item => item.id === activeView);
+                if (currentIndex !== -1) {
+                  const nextIndex = (currentIndex + 1) % navItems.length;
+                  const nextItem = navItems[nextIndex];
+                  setActiveView(nextItem.id);
+                  const targetPath = nextItem.id === 'dashboard' ? '/' : `/${nextItem.id}`;
+                  if (window.location.pathname !== targetPath) {
+                    window.history.pushState({}, '', targetPath);
+                  }
+                  handleShowNotification(
+                    language.startsWith('pt') ? 'Navegação Omni' : 'Omni Navigation',
+                    language.startsWith('pt') ? `Acessando: ${nextItem.label}` : `Accessing: ${nextItem.label}`,
+                    'info'
+                  );
+                }
+              } else if (info.offset.x > swipeThreshold) {
+                // Swiped Right -> previous tab
+                const currentIndex = navItems.findIndex(item => item.id === activeView);
+                if (currentIndex !== -1) {
+                  const prevIndex = (currentIndex - 1 + navItems.length) % navItems.length;
+                  const prevItem = navItems[prevIndex];
+                  setActiveView(prevItem.id);
+                  const targetPath = prevItem.id === 'dashboard' ? '/' : `/${prevItem.id}`;
+                  if (window.location.pathname !== targetPath) {
+                    window.history.pushState({}, '', targetPath);
+                  }
+                  handleShowNotification(
+                    language.startsWith('pt') ? 'Navegação Omni' : 'Omni Navigation',
+                    language.startsWith('pt') ? `Acessando: ${prevItem.label}` : `Accessing: ${prevItem.label}`,
+                    'info'
+                  );
+                }
+              }
+            }}
+          >
             {renderActiveView()}
-          </div>
+          </motion.div>
 
         </main>
 
         {/* SETTINGS MODAL (Theme and Language Configuration) */}
         {isSettingsOpen && (
           <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-white/10 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-fade-in">
-              <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-950">
+            <div className="bg-slate-900 border border-white/10 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-fade-in max-h-[90vh] flex flex-col">
+              <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-950 shrink-0">
                 <div className="flex items-center space-x-2">
                   <Settings className="w-4 h-4 text-emerald-400" />
                   <h3 className="text-sm font-bold text-white">{t('settings', 'Definições / Configurações')}</h3>
@@ -897,170 +1063,217 @@ export default function App() {
                 <button 
                   onClick={() => setIsSettingsOpen(false)}
                   className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/5"
+                  style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 {/* Supabase Sync Controller */}
-                <div className="space-y-3">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                      <Database className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
-                      {t('supabaseSyncTitle', 'Nuvem Supabase Cloud')}
-                    </label>
-                    <p className="text-[11px] text-slate-500">
-                      {t('supabaseSyncDesc', 'Sincronize todo o estado do OmniSaaS (Hábitos, Finanças, Metas e Colaboradores) de forma bidirecional com o seu banco de dados Supabase.')}
-                    </p>
-
-                    {/* Dynamic Credentials Inputs */}
-                    <div className="space-y-2 bg-black/20 p-3 rounded-xl border border-white/5">
-                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                        {language === 'pt' ? 'Configurar Credenciais do Banco' : 'Configure Database Credentials'}
+                {isOwner && (
+                  <div className="space-y-3 pb-6 border-b border-white/5">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                        <Database className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+                        {t('supabaseSyncTitle', 'Nuvem Supabase Cloud')}
+                      </label>
+                      <p className="text-[11px] text-slate-500">
+                        {t('supabaseSyncDesc', 'Sincronize todo o estado do OmniSaaS (Hábitos, Finanças, Metas e Colaboradores) de forma bidirecional com o seu banco de dados Supabase.')}
                       </p>
-                      <div className="space-y-1.5">
-                        <input
-                          type="text"
-                          placeholder="Supabase Project URL (https://your-project.supabase.co)"
-                          value={supabaseUrlInput}
-                          onChange={(e) => setSupabaseUrlInput(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
-                        />
-                        <input
-                          type="password"
-                          placeholder="Supabase Anon/Public Key"
-                          value={supabaseAnonKeyInput}
-                          onChange={(e) => setSupabaseAnonKeyInput(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
-                        />
+
+                      {/* Dynamic Credentials Inputs */}
+                      <div className="space-y-2 bg-black/20 p-3 rounded-xl border border-white/5">
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                          {language.startsWith('pt') ? 'Configurar Credenciais do Banco' : 'Configure Database Credentials'}
+                        </p>
+                        <div className="space-y-1.5">
+                          <input
+                            type="text"
+                            placeholder="Supabase Project URL (https://your-project.supabase.co)"
+                            value={supabaseUrlInput}
+                            onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                          <input
+                            type="password"
+                            placeholder="Supabase Anon/Public Key"
+                            value={supabaseAnonKeyInput}
+                            onChange={(e) => setSupabaseAnonKeyInput(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSaveSupabaseCredentials}
+                          disabled={isCheckingSupabase}
+                          className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-55 text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition flex items-center justify-center space-x-1.5"
+                        >
+                          {isCheckingSupabase ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              <span>{language.startsWith('pt') ? 'Testando Conexão...' : 'Testing Connection...'}</span>
+                            </>
+                          ) : (
+                            <span>{language.startsWith('pt') ? 'Salvar & Testar Conexão' : 'Save & Test Connection'}</span>
+                          )}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleSaveSupabaseCredentials}
-                        disabled={isCheckingSupabase}
-                        className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-55 text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition flex items-center justify-center space-x-1.5"
-                      >
+
+                    {/* Status Indicator */}
+                    <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400 font-medium">Status:</span>
                         {isCheckingSupabase ? (
-                          <>
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                            <span>{language === 'pt' ? 'Testando Conexão...' : 'Testing Connection...'}</span>
-                          </>
+                          <span className="inline-flex items-center text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                            <RefreshCw className="w-2.5 h-2.5 mr-1 animate-spin" />
+                            {language.startsWith('pt') ? 'Testando...' : 'Testing...'}
+                          </span>
+                        ) : supabaseStatus === null ? (
+                          <span className="inline-flex items-center text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                            <RefreshCw className="w-2.5 h-2.5 mr-1 animate-spin" />
+                            {t('supabaseStatusInitializing', 'Inicializando...')}
+                          </span>
+                        ) : supabaseStatus.connected ? (
+                          supabaseStatus.tablesExist ? (
+                            <span className="inline-flex items-center text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                              <Cloud className="w-2.5 h-2.5 mr-1 text-emerald-400" />
+                              {t('supabaseStatusConnected', 'Conectado com Sucesso')}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
+                              <AlertTriangle className="w-2.5 h-2.5 mr-1 text-amber-400" />
+                              {t('supabaseStatusPendingInit', 'Esquema Pendente')}
+                            </span>
+                          )
                         ) : (
-                          <span>{language === 'pt' ? 'Salvar & Testar Conexão' : 'Save & Test Connection'}</span>
+                          <span className="inline-flex items-center text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold">
+                            <X className="w-2.5 h-2.5 mr-1 text-rose-400" />
+                            {language.startsWith('pt') ? 'Não Conectado' : 'Not Connected'}
+                          </span>
                         )}
-                      </button>
-                    </div>
-
-                  {/* Status Indicator */}
-                  <div className="p-3.5 rounded-xl bg-black/30 border border-white/5 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400 font-medium">Status:</span>
-                      {isCheckingSupabase ? (
-                        <span className="inline-flex items-center text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold animate-pulse">
-                          <RefreshCw className="w-2.5 h-2.5 mr-1 animate-spin" />
-                          {language === 'pt' ? 'Testando...' : 'Testing...'}
-                        </span>
-                      ) : supabaseStatus === null ? (
-                        <span className="inline-flex items-center text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold animate-pulse">
-                          <RefreshCw className="w-2.5 h-2.5 mr-1 animate-spin" />
-                          {t('supabaseStatusInitializing', 'Inicializando...')}
-                        </span>
-                      ) : supabaseStatus.connected ? (
-                        supabaseStatus.tablesExist ? (
-                          <span className="inline-flex items-center text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
-                            <Cloud className="w-2.5 h-2.5 mr-1 text-emerald-400" />
-                            {t('supabaseStatusConnected', 'Conectado com Sucesso')}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
-                            <AlertTriangle className="w-2.5 h-2.5 mr-1 text-amber-400" />
-                            {t('supabaseStatusPendingInit', 'Esquema Pendente')}
-                          </span>
-                        )
-                      ) : (
-                        <span className="inline-flex items-center text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold">
-                          <X className="w-2.5 h-2.5 mr-1 text-rose-400" />
-                          {language === 'pt' ? 'Não Conectado' : 'Not Connected'}
-                        </span>
-                      )}
-                    </div>
-
-                    {supabaseStatus && supabaseStatus.url && (
-                      <div className="text-[9.5px] text-slate-500 font-mono truncate">
-                        URL: <span className="text-slate-400">{supabaseStatus.url}</span>
                       </div>
-                    )}
 
-                    {/* Detailed message if failed */}
-                    {supabaseStatus && !supabaseStatus.connected && supabaseStatus.message && (
-                      <div className="text-[10px] bg-rose-950/20 text-rose-400 p-2.5 rounded-lg border border-rose-500/15 leading-relaxed font-mono whitespace-pre-wrap break-all">
-                        {supabaseStatus.message}
-                      </div>
-                    )}
-
-                    {/* Action buttons */}
-                    <div className="grid grid-cols-2 gap-2 pt-1.5">
-                      <button
-                        onClick={handleSupabasePush}
-                        disabled={isSyncing || isPulling || !supabaseStatus?.connected}
-                        className="py-2 px-3 bg-emerald-500 hover:bg-emerald-450 disabled:opacity-35 disabled:hover:bg-emerald-500 text-black font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center justify-center space-x-1.5 transition"
-                      >
-                        <Cloud className="w-3.5 h-3.5" />
-                        <span>{isSyncing ? 'Syncing...' : t('supabaseSyncNowBtn', 'Enviar Dados (Push)')}</span>
-                      </button>
-                      
-                      <button
-                        onClick={handleSupabasePull}
-                        disabled={isSyncing || isPulling || !supabaseStatus?.connected || !supabaseStatus?.tablesExist}
-                        className="py-2 px-3 bg-slate-800 hover:bg-slate-750 disabled:opacity-35 disabled:hover:bg-slate-800 text-white border border-white/5 font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center justify-center space-x-1.5 transition"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>{isPulling ? 'Pulling...' : t('supabasePullNowBtn', 'Baixar Dados (Pull)')}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Schema initialization notice */}
-                  {supabaseStatus && supabaseStatus.connected && !supabaseStatus.tablesExist && (
-                    <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-2">
-                      <p className="text-[10px] text-amber-500/95 leading-normal">
-                        {t('supabaseInitRequired', 'Atenção: A tabela "omnisaas_store" não foi encontrada. Clique abaixo para ver o comando SQL de inicialização.')}
-                      </p>
-                      
-                      <button
-                        onClick={() => setShowSupabaseSql(!showSupabaseSql)}
-                        className="text-[10px] font-bold text-amber-400 hover:underline flex items-center space-x-1"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>{t('supabaseInitShowSql', 'Exibir SQL de Setup')}</span>
-                      </button>
-
-                      {showSupabaseSql && supabaseStatus.sql && (
-                        <div className="space-y-1.5 pt-1">
-                          <p className="text-[9px] text-slate-400">
-                            {t('supabaseInstructionCopy', 'Copie e execute o SQL acima no SQL Editor do seu console Supabase para criar a estrutura:')}
-                          </p>
-                          <div className="relative">
-                            <pre className="p-2 bg-black/50 text-[9px] font-mono text-slate-300 rounded border border-white/5 overflow-x-auto whitespace-pre leading-relaxed select-all">
-                              {supabaseStatus.sql}
-                            </pre>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(supabaseStatus.sql || '');
-                                setIsCopied(true);
-                                setTimeout(() => setIsCopied(false), 2000);
-                              }}
-                              className="absolute right-1.5 top-1.5 p-1.5 bg-slate-900 hover:bg-slate-850 rounded text-slate-400 hover:text-white border border-white/5 transition"
-                              title="Copiar SQL"
-                            >
-                              {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                            </button>
-                          </div>
+                      {supabaseStatus && supabaseStatus.url && (
+                        <div className="text-[9.5px] text-slate-500 font-mono truncate">
+                          URL: <span className="text-slate-400">{supabaseStatus.url}</span>
                         </div>
                       )}
+
+                      {/* Detailed message if failed */}
+                      {supabaseStatus && !supabaseStatus.connected && supabaseStatus.message && (
+                        <div className="text-[10px] bg-rose-950/20 text-rose-400 p-2.5 rounded-lg border border-rose-500/15 leading-relaxed font-mono whitespace-pre-wrap break-all">
+                          {supabaseStatus.message}
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="grid grid-cols-2 gap-2 pt-1.5">
+                        <button
+                          onClick={handleSupabasePush}
+                          disabled={isSyncing || isPulling || !supabaseStatus?.connected}
+                          className="py-2 px-3 bg-emerald-500 hover:bg-emerald-450 disabled:opacity-35 disabled:hover:bg-emerald-500 text-black font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center justify-center space-x-1.5 transition"
+                        >
+                          <Cloud className="w-3.5 h-3.5" />
+                          <span>{isSyncing ? 'Syncing...' : t('supabaseSyncNowBtn', 'Enviar Dados (Push)')}</span>
+                        </button>
+                        
+                        <button
+                          onClick={handleSupabasePull}
+                          disabled={isSyncing || isPulling || !supabaseStatus?.connected || !supabaseStatus?.tablesExist}
+                          className="py-2 px-3 bg-slate-800 hover:bg-slate-750 disabled:opacity-35 disabled:hover:bg-slate-800 text-white border border-white/5 font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center justify-center space-x-1.5 transition"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>{isPulling ? 'Pulling...' : t('supabasePullNowBtn', 'Baixar Dados (Pull)')}</span>
+                        </button>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Schema initialization notice */}
+                    {supabaseStatus && supabaseStatus.connected && !supabaseStatus.tablesExist && (
+                      <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-2">
+                        <p className="text-[10px] text-amber-500/95 leading-normal">
+                          {t('supabaseInitRequired', 'Atenção: A tabela "omnisaas_store" não foi encontrada. Clique abaixo para ver o comando SQL de inicialização.')}
+                        </p>
+                        
+                        <button
+                          onClick={() => setShowSupabaseSql(!showSupabaseSql)}
+                          className="text-[10px] font-bold text-amber-400 hover:underline flex items-center space-x-1"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>{t('supabaseInitShowSql', 'Exibir SQL de Setup')}</span>
+                        </button>
+
+                        {showSupabaseSql && supabaseStatus.sql && (
+                          <div className="space-y-1.5 pt-1">
+                            <p className="text-[9px] text-slate-400">
+                              {t('supabaseInstructionCopy', 'Copie e execute o SQL acima no SQL Editor do seu console Supabase para criar a estrutura:')}
+                            </p>
+                            <div className="relative">
+                              <pre className="p-2 bg-black/50 text-[9px] font-mono text-slate-300 rounded border border-white/5 overflow-x-auto whitespace-pre leading-relaxed select-all">
+                                {supabaseStatus.sql}
+                              </pre>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(supabaseStatus.sql || '');
+                                  setIsCopied(true);
+                                  setTimeout(() => setIsCopied(false), 2000);
+                                }}
+                                className="absolute right-1.5 top-1.5 p-1.5 bg-slate-900 hover:bg-slate-850 rounded text-slate-400 hover:text-white border border-white/5 transition"
+                                title="Copiar SQL"
+                              >
+                                {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Accent Color Customization Section */}
+                <div className="space-y-3 pt-4 border-t border-white/5" id="settings-accent-color-section">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <Palette className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
+                    {language.startsWith('pt') ? 'Cor de Destaque' : language.startsWith('es') ? 'Color de Acento' : 'Accent Color'}
+                  </label>
+                  <p className="text-[11px] text-slate-500">
+                    {language.startsWith('pt') 
+                      ? 'Selecione uma cor para personalizar todos os botões, links, ícones e destaques do SaaS.' 
+                      : language.startsWith('es')
+                      ? 'Seleccione un color para personalizar todos los botones, enlaces, iconos y detalles del SaaS.'
+                      : 'Select an accent color to personalize all buttons, links, icons, and indicators in the SaaS.'}
+                  </p>
+                  <div className="flex items-center gap-2 pt-1" id="accent-color-selector">
+                    {[
+                      { id: 'blue', label: language.startsWith('pt') ? 'Azul' : language.startsWith('es') ? 'Azul' : 'Blue', color: 'bg-blue-500' },
+                      { id: 'emerald', label: language.startsWith('pt') ? 'Verde' : language.startsWith('es') ? 'Esmeralda' : 'Emerald', color: 'bg-emerald-500' },
+                      { id: 'rose', label: language.startsWith('pt') ? 'Rosa' : language.startsWith('es') ? 'Rosa' : 'Rose', color: 'bg-rose-500' },
+                      { id: 'purple', label: language.startsWith('pt') ? 'Roxo' : language.startsWith('es') ? 'Púrpura' : 'Purple', color: 'bg-purple-500' },
+                      { id: 'orange', label: language.startsWith('pt') ? 'Laranja' : language.startsWith('es') ? 'Naranja' : 'Orange', color: 'bg-orange-500' }
+                    ].map((c) => {
+                      const isActive = accent === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setAccent(c.id)}
+                          title={c.label}
+                          type="button"
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer border ${
+                            isActive 
+                              ? 'ring-2 ring-white/45 scale-110 border-white text-white' 
+                              : 'border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <span className={`w-5 h-5 rounded-lg ${c.color} flex items-center justify-center shadow-lg relative`}>
+                            {isActive && <Check className="w-3 h-3 text-white stroke-[3.5]" />}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
               </div>
 
 

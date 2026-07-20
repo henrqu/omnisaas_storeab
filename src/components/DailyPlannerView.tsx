@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useLanguageTheme } from '../utils/i18n';
 import {
   Calendar, BookOpen, Flame, Target, Timer, ClipboardList, Sun, Moon,
   MessageSquare, Brain, Briefcase, GraduationCap, Coffee, Dumbbell,
@@ -237,6 +238,7 @@ const getEmptyRecord = (date: string): DailyRecord => ({
 });
 
 export default function DailyPlannerView({ onShowNotification }: DailyPlannerViewProps) {
+  const { t, language } = useLanguageTheme();
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
   });
@@ -541,7 +543,7 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
       return `
         <div style="page-break-inside: avoid; border: 1px solid #000; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;">
           <h3 style="margin-top:0; border-bottom: 1px solid #000; padding-bottom: 4px; font-family: sans-serif; text-transform: uppercase; font-size: 13px;">
-            ${idx + 1}. ${cat.pt}
+            ${idx + 1}. ${language === 'pt' || language === 'pt-BR' ? cat.pt : (language === 'es' ? cat.es : cat.name)}
           </h3>
           ${content}
         </div>
@@ -629,7 +631,7 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
       <div className="lg:col-span-1 bg-slate-900/30 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between" id="sidebar-categories">
         <div>
           <div className="mb-4">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Escolher Data</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('chooseDateLabel', 'Escolher Data')}</label>
             <input 
               type="date" 
               value={selectedDate}
@@ -639,7 +641,7 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
           </div>
 
           <div className="border-t border-slate-800/80 pt-3 mb-2">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">20 Categorias Diárias</span>
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">{t('dailyCategoriesHeading', '20 Categorias Diárias')}</span>
           </div>
 
           <div className="space-y-1 max-h-[460px] overflow-y-auto pr-1" id="categories-scrollable-list">
@@ -658,7 +660,7 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
                   id={`btn-cat-${cat.id}`}
                 >
                   <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
-                  <span className="truncate">{cat.id}. {cat.pt}</span>
+                  <span className="truncate">{cat.id}. {language === 'pt' || language === 'pt-BR' ? cat.pt : (language === 'es' ? cat.es : cat.name)}</span>
                 </button>
               );
             })}
@@ -672,7 +674,7 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
             className="w-full bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-750 font-semibold text-xs py-2 rounded-xl transition flex items-center justify-center space-x-1"
           >
             <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Preencher Amostra</span>
+            <span>{t('prefillSampleBtn', 'Preencher Amostra')}</span>
           </button>
           
           <button
@@ -680,14 +682,14 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
             className="w-full bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/25 font-semibold text-xs py-2 rounded-xl transition flex items-center justify-center space-x-1"
           >
             <Printer className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Imprimir Folha Diária</span>
+            <span>{t('printDailySheetBtn', 'Imprimir Folha Diária')}</span>
           </button>
 
           <button
             onClick={handleClearDay}
             className="w-full bg-transparent hover:bg-rose-950/15 text-rose-400 hover:text-rose-350 font-medium text-[11px] py-1.5 transition text-center"
           >
-            Limpar Registro do Dia
+            {t('clearDayRecordBtn', 'Limpar Registro do Dia')}
           </button>
         </div>
       </div>
@@ -703,12 +705,12 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
             </div>
             <div>
               <h2 className="text-md font-bold text-white tracking-tight flex items-center">
-                {activeCategory.pt}
+                {language === 'pt' || language === 'pt-BR' ? activeCategory.pt : (language === 'es' ? activeCategory.es : activeCategory.name)}
                 <span className="text-[10px] ml-2 bg-indigo-950 border border-indigo-800/50 text-indigo-400 px-2 py-0.5 rounded-full font-medium">
-                  Seção {activeCategory.id} de 20
+                  {t('sectionLabel', 'Seção')} {activeCategory.id} {t('ofLabel', 'de')} 20
                 </span>
               </h2>
-              <p className="text-slate-400 text-xs">{activeCategory.name} Category - Registro de {selectedDate}</p>
+              <p className="text-slate-400 text-xs">{activeCategory.name} Category - {t('recordOfLabel', 'Registro de')} {selectedDate}</p>
             </div>
           </div>
           
@@ -2123,24 +2125,24 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
 }
 
 const CATEGORIES = [
-  { id: 1, name: 'Daily Planner', pt: 'Planejamento Diário', icon: Calendar, color: 'text-blue-400 border-blue-500/25 bg-blue-500/5' },
-  { id: 2, name: 'Daily Journal', pt: 'Diário de Bordo', icon: BookOpen, color: 'text-pink-400 border-pink-500/25 bg-pink-500/5' },
-  { id: 3, name: 'Daily Habit Tracker', pt: 'Rastreador de Hábitos', icon: Flame, color: 'text-orange-400 border-orange-500/25 bg-orange-500/5' },
-  { id: 4, name: 'Daily Goals', pt: 'Metas Diárias', icon: Target, color: 'text-indigo-400 border-indigo-500/25 bg-indigo-500/5' },
-  { id: 5, name: 'Daily Time Blocking', pt: 'Blocos de Tempo', icon: Timer, color: 'text-cyan-400 border-cyan-500/25 bg-cyan-500/5' },
-  { id: 6, name: 'Daily To-Do List', pt: 'Lista de Tarefas', icon: ClipboardList, color: 'text-teal-400 border-teal-500/25 bg-teal-500/5' },
-  { id: 7, name: 'Morning Routine', pt: 'Rotina Matinal', icon: Sun, color: 'text-yellow-400 border-yellow-500/25 bg-yellow-500/5' },
-  { id: 8, name: 'Evening Routine', pt: 'Rotina Noturna', icon: Moon, color: 'text-purple-400 border-purple-500/25 bg-purple-500/5' },
-  { id: 9, name: 'Meeting Notes', pt: 'Notas de Reunião', icon: MessageSquare, color: 'text-sky-400 border-sky-500/25 bg-sky-500/5' },
-  { id: 10, name: 'Brain Dump', pt: 'Esvaziar a Mente', icon: Brain, color: 'text-rose-400 border-rose-500/25 bg-rose-500/5' },
-  { id: 11, name: 'Work Log', pt: 'Registro de Trabalho', icon: Briefcase, color: 'text-emerald-400 border-emerald-500/25 bg-emerald-500/5' },
-  { id: 12, name: 'Study Planner', pt: 'Planejamento de Estudos', icon: GraduationCap, color: 'text-amber-400 border-amber-500/25 bg-amber-500/5' },
-  { id: 13, name: 'Meal Planner', pt: 'Cardápio Diário', icon: Coffee, color: 'text-red-400 border-red-500/25 bg-red-500/5' },
-  { id: 14, name: 'Fitness Log', pt: 'Registro Fitness', icon: Dumbbell, color: 'text-lime-400 border-lime-500/25 bg-lime-500/5' },
-  { id: 15, name: 'Mood Tracker', pt: 'Rastreador de Humor', icon: Smile, color: 'text-indigo-400 border-indigo-500/25 bg-indigo-500/5' },
-  { id: 16, name: 'Self-Care Checklist', pt: 'Autocuidado', icon: Heart, color: 'text-pink-500 border-pink-500/25 bg-pink-500/5' },
-  { id: 17, name: 'Expenses Today', pt: 'Despesas de Hoje', icon: DollarSign, color: 'text-emerald-400 border-emerald-500/25 bg-emerald-500/5' },
-  { id: 18, name: 'Daily Reflection', pt: 'Reflexão Diária', icon: Sparkles, color: 'text-violet-400 border-violet-500/25 bg-violet-500/5' },
-  { id: 19, name: 'Daily Dashboard', pt: 'Painel Geral Diário', icon: TrendingUp, color: 'text-amber-500 border-amber-500/25 bg-amber-500/5' },
-  { id: 20, name: 'Quick Notes', pt: 'Notas Rápidas', icon: FileText, color: 'text-slate-400 border-slate-500/25 bg-slate-500/5' }
+  { id: 1, name: 'Daily Planner', pt: 'Planejamento Diário', es: 'Planificación Diaria', icon: Calendar, color: 'text-blue-400 border-blue-500/25 bg-blue-500/5' },
+  { id: 2, name: 'Daily Journal', pt: 'Diário de Bordo', es: 'Diario de Bordo', icon: BookOpen, color: 'text-pink-400 border-pink-500/25 bg-pink-500/5' },
+  { id: 3, name: 'Daily Habit Tracker', pt: 'Rastreador de Hábitos', es: 'Seguimiento de Hábitos', icon: Flame, color: 'text-orange-400 border-orange-500/25 bg-orange-500/5' },
+  { id: 4, name: 'Daily Goals', pt: 'Metas Diárias', es: 'Metas Diarias', icon: Target, color: 'text-indigo-400 border-indigo-500/25 bg-indigo-500/5' },
+  { id: 5, name: 'Daily Time Blocking', pt: 'Blocos de Tempo', es: 'Bloques de Tiempo', icon: Timer, color: 'text-cyan-400 border-cyan-500/25 bg-cyan-500/5' },
+  { id: 6, name: 'Daily To-Do List', pt: 'Lista de Tarefas', es: 'Lista de Tareas', icon: ClipboardList, color: 'text-teal-400 border-teal-500/25 bg-teal-500/5' },
+  { id: 7, name: 'Morning Routine', pt: 'Rotina Matinal', es: 'Rutina Matinal', icon: Sun, color: 'text-yellow-400 border-yellow-500/25 bg-yellow-500/5' },
+  { id: 8, name: 'Evening Routine', pt: 'Rotina Noturna', es: 'Rutina Nocturna', icon: Moon, color: 'text-purple-400 border-purple-500/25 bg-purple-500/5' },
+  { id: 9, name: 'Meeting Notes', pt: 'Notas de Reunião', es: 'Notas de Reunión', icon: MessageSquare, color: 'text-sky-400 border-sky-500/25 bg-sky-500/5' },
+  { id: 10, name: 'Brain Dump', pt: 'Esvaziar a Mente', es: 'Vaciado de Mente', icon: Brain, color: 'text-rose-400 border-rose-500/25 bg-rose-500/5' },
+  { id: 11, name: 'Work Log', pt: 'Registro de Trabalho', es: 'Registro de Trabajo', icon: Briefcase, color: 'text-emerald-400 border-emerald-500/25 bg-emerald-500/5' },
+  { id: 12, name: 'Study Planner', pt: 'Planejamento de Estudos', es: 'Planificación de Estudios', icon: GraduationCap, color: 'text-amber-400 border-amber-500/25 bg-amber-500/5' },
+  { id: 13, name: 'Meal Planner', pt: 'Cardápio Diário', es: 'Menú Diario', icon: Coffee, color: 'text-red-400 border-red-500/25 bg-red-500/5' },
+  { id: 14, name: 'Fitness Log', pt: 'Registro Fitness', es: 'Registro Fitness', icon: Dumbbell, color: 'text-lime-400 border-lime-500/25 bg-lime-500/5' },
+  { id: 15, name: 'Mood Tracker', pt: 'Rastreador de Humor', es: 'Seguimiento de Ánimo', icon: Smile, color: 'text-indigo-400 border-indigo-500/25 bg-indigo-500/5' },
+  { id: 16, name: 'Self-Care Checklist', pt: 'Autocuidado', es: 'Autocuidado', icon: Heart, color: 'text-pink-500 border-pink-500/25 bg-pink-500/5' },
+  { id: 17, name: 'Expenses Today', pt: 'Despesas de Hoje', es: 'Gastos de Hoy', icon: DollarSign, color: 'text-emerald-400 border-emerald-500/25 bg-emerald-500/5' },
+  { id: 18, name: 'Daily Reflection', pt: 'Reflexão Diária', es: 'Reflexión Diaria', icon: Sparkles, color: 'text-violet-400 border-violet-500/25 bg-violet-500/5' },
+  { id: 19, name: 'Daily Dashboard', pt: 'Painel Geral Diário', es: 'Tablero General Diario', icon: TrendingUp, color: 'text-amber-500 border-amber-500/25 bg-amber-500/5' },
+  { id: 20, name: 'Quick Notes', pt: 'Notas Rápidas', es: 'Notas Rápidas', icon: FileText, color: 'text-slate-400 border-slate-500/25 bg-slate-500/5' }
 ];

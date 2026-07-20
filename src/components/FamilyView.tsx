@@ -17,12 +17,14 @@ import {
 } from 'lucide-react';
 import { LocalDatabase } from '../utils/db';
 import { FamilyMember } from '../types/schema';
+import { useLanguageTheme } from '../utils/i18n';
 
 interface FamilyViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
 }
 
 export default function FamilyView({ onShowNotification }: FamilyViewProps) {
+  const { t, language } = useLanguageTheme();
   const [members, setMembers] = useState<FamilyMember[]>([]);
 
   // Form states
@@ -43,7 +45,11 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 2 * 1024 * 1024) {
-        onShowNotification('Avatar muito grande', 'O avatar excede o limite de 2MB.', 'warning');
+        onShowNotification(
+          t('familyAvatarTooLarge', 'Avatar muito grande'),
+          t('familyAvatarExceedsLimit', 'O avatar excede o limite de 2MB.'),
+          'warning'
+        );
         return;
       }
       const reader = new FileReader();
@@ -64,7 +70,11 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
     Array.from(files).forEach(file => {
       // Limit file size to 5MB to avoid localStorage issues
       if (file.size > 5 * 1024 * 1024) {
-        onShowNotification('Arquivo muito grande', `O arquivo "${file.name}" excede o limite de 5MB.`, 'warning');
+        onShowNotification(
+          t('familyFileTooLarge', 'Arquivo muito grande'),
+          t('familyFileExceedsLimit', 'O arquivo "{name}" excede o limite de 5MB.').replace('{name}', file.name),
+          'warning'
+        );
         return;
       }
       const reader = new FileReader();
@@ -112,11 +122,11 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setFormError('Por favor, informe o nome do membro da família.');
+      setFormError(t('familyProvideName', 'Por favor, informe o nome do membro da família.'));
       return;
     }
     if (!birthDate) {
-      setFormError('Por favor, informe a data de nascimento.');
+      setFormError(t('familyProvideBirthDate', 'Por favor, informe a data de nascimento.'));
       return;
     }
     setFormError('');
@@ -125,7 +135,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
       name: name.trim(),
       relationship,
       birth_date: birthDate,
-      notes: notes.trim() || 'Sem observações.',
+      notes: notes.trim() || t('familyNoNotes', 'Sem observações.'),
       documents: uploadedDocs,
       avatar_url: avatarUrl
     });
@@ -136,13 +146,21 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
     setNotes('');
     setUploadedDocs([]);
     setAvatarUrl('');
-    onShowNotification('Perfil de Família Salvo', `Membro "${newMem.name}" cadastrado com sucesso!`, 'success');
+    onShowNotification(
+      t('familyProfileSaved', 'Perfil de Família Salvo'),
+      t('familyMemberRegisteredSuccess', 'Membro "{name}" cadastrado com sucesso!').replace('{name}', newMem.name),
+      'success'
+    );
   };
 
   const handleDeleteMember = (id: string, name: string) => {
     const updated = LocalDatabase.deleteFamilyMember(id);
     setMembers(updated);
-    onShowNotification('Perfil Removido', `O registro de "${name}" foi apagado.`, 'info');
+    onShowNotification(
+      t('familyProfileRemoved', 'Perfil Removido'),
+      t('familyProfileRemovedDesc', 'O registro de "{name}" foi apagado.').replace('{name}', name),
+      'info'
+    );
   };
 
   // Age Calculator Helper
@@ -159,19 +177,19 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
     if (age === 0) {
       // Calculate months instead
       const months = (today.getFullYear() - birthDate.getFullYear()) * 12 + today.getMonth() - birthDate.getMonth();
-      return `${months} ${months === 1 ? 'mês' : 'meses'}`;
+      return `${months} ${months === 1 ? t('familyMonth', 'mês') : t('familyMonths', 'meses')}`;
     }
 
-    return `${age} ${age === 1 ? 'ano' : 'anos'}`;
+    return `${age} ${age === 1 ? t('familyYear', 'ano') : t('familyYears', 'anos')}`;
   };
 
   const getRelationshipLabel = (rel: string) => {
     switch (rel) {
-      case 'spouse': return 'Cônjuge / Parceiro(a)';
-      case 'child': return 'Filho(a)';
-      case 'parent': return 'Pai / Mãe';
-      case 'sibling': return 'Irmão / Irmã';
-      default: return 'Outros';
+      case 'spouse': return t('familySpouseLabel', 'Cônjuge / Parceiro(a)');
+      case 'child': return t('familyChildLabel', 'Filho(a)');
+      case 'parent': return t('familyParentLabel', 'Pai / Mãe');
+      case 'sibling': return t('familySiblingLabel', 'Irmão / Irmã');
+      default: return t('familyOtherLabel', 'Outros');
     }
   };
 
@@ -193,14 +211,14 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
         <div>
           <h2 className="text-sm font-bold text-white tracking-tight flex items-center">
             <Users className="w-4 h-4 mr-1.5 text-indigo-400" />
-            Cadastrar Membro Familiar
+            {t('familyAddMemberTitle', 'Cadastrar Membro Familiar')}
           </h2>
-          <p className="text-slate-400 text-[11px] mt-0.5">Gerencie os perfis de quem você ama e compartilha responsabilidades.</p>
+          <p className="text-slate-400 text-[11px] mt-0.5">{t('familyAddMemberDesc', 'Gerencie os perfis de quem você ama e compartilha responsabilidades.')}</p>
         </div>
 
         <form onSubmit={handleAddMember} className="space-y-4 mt-5">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nome Completo</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('familyFullName', 'Nome Completo')}</label>
             <input 
               type="text" placeholder="Ex: Ana Souza King"
               value={name} onChange={(e) => setName(e.target.value)}
@@ -211,21 +229,21 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Parentesco</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('familyRelationship', 'Parentesco')}</label>
               <select 
                 value={relationship} onChange={(e) => setRelationship(e.target.value as any)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
               >
-                <option value="spouse">Cônjuge</option>
-                <option value="child">Filho(a)</option>
-                <option value="parent">Mãe / Pai</option>
-                <option value="sibling">Irmão/Irmã</option>
-                <option value="other">Outros</option>
+                <option value="spouse">{t('familySpouseOpt', 'Cônjuge')}</option>
+                <option value="child">{t('familyChildOpt', 'Filho(a)')}</option>
+                <option value="parent">{t('familyParentOpt', 'Mãe / Pai')}</option>
+                <option value="sibling">{t('familySiblingOpt', 'Irmão/Irmã')}</option>
+                <option value="other">{t('familyOtherOpt', 'Outros')}</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nascimento</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('familyBirthDate', 'Nascimento')}</label>
               <input 
                 type="date"
                 value={birthDate} onChange={(e) => setBirthDate(e.target.value)}
@@ -235,9 +253,9 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Observações Médicas ou Gerais</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('familyMedicalNotes', 'Observações Médicas ou Gerais')}</label>
             <textarea 
-              rows={3} placeholder="Ex: Gosta de ler, possui intolerância a lactose..."
+              rows={3} placeholder={t('familyNotesPlaceholder', 'Ex: Gosta de ler, possui intolerância a lactose...')}
               value={notes} onChange={(e) => setNotes(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500"
             />
@@ -246,7 +264,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
           {/* Upload de Avatar para o Membro Familiar */}
           <div className="space-y-1.5">
             <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              Avatar do Membro (Opcional)
+              {t('familyAvatarLabel', 'Avatar do Membro (Opcional)')}
             </label>
             <div className="flex items-center space-x-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
               <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
@@ -269,7 +287,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
                   onClick={() => document.getElementById('family-avatar-input')?.click()}
                   className="bg-indigo-600/15 hover:bg-indigo-600 border border-indigo-500/20 hover:border-indigo-500 text-indigo-300 hover:text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition"
                 >
-                  Selecionar Imagem
+                  {t('familySelectImage', 'Selecionar Imagem')}
                 </button>
                 {avatarUrl && (
                   <button
@@ -277,7 +295,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
                     onClick={() => setAvatarUrl('')}
                     className="ml-2 text-rose-400 hover:text-rose-300 text-[10px] font-semibold"
                   >
-                    Remover
+                    {t('familyRemove', 'Remover')}
                   </button>
                 )}
               </div>
@@ -287,7 +305,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
           {/* Document Upload Area with Drag and Drop */}
           <div className="space-y-1.5">
             <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              Documentos & Comprovantes (Upload Direto)
+              {t('familyDocumentsLabel', 'Documentos & Comprovantes (Upload Direto)')}
             </label>
             <div 
               onDragOver={handleDragOver}
@@ -309,13 +327,15 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
               />
               <span className="text-xl block mb-1">📂</span>
-              <p className="text-[11px] font-bold text-slate-300">Arrastar & Soltar ou clique para fazer upload</p>
-              <p className="text-[9px] text-slate-500 mt-0.5">PDF, Word ou Imagens (Max 5MB)</p>
+              <p className="text-[11px] font-bold text-slate-300">{t('familyDragDrop', 'Arrastar & Soltar ou clique para fazer upload')}</p>
+              <p className="text-[9px] text-slate-500 mt-0.5">{t('familyAllowedFiles', 'PDF, Word ou Imagens (Max 5MB)')}</p>
             </div>
 
             {uploadedDocs.length > 0 && (
               <div className="space-y-1.5 mt-2 bg-slate-950/60 p-2 rounded-xl border border-slate-850">
-                <span className="text-[10px] font-bold text-indigo-400 font-mono block uppercase tracking-wide">Arquivos anexados ({uploadedDocs.length}):</span>
+                <span className="text-[10px] font-bold text-indigo-400 font-mono block uppercase tracking-wide">
+                  {t('familyAttachedFiles', 'Arquivos anexados ({count}):').replace('{count}', String(uploadedDocs.length))}
+                </span>
                 <div className="space-y-1 max-h-24 overflow-y-auto">
                   {uploadedDocs.map((doc, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg text-[10px] text-slate-300">
@@ -334,7 +354,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
                         }}
                         className="text-rose-400 hover:text-rose-300 text-[10px] font-semibold px-1"
                       >
-                        Excluir
+                        {t('familyDelete', 'Excluir')}
                       </button>
                     </div>
                   ))}
@@ -348,7 +368,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
             className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 rounded-xl transition"
             id="submit-family-btn"
           >
-            Adicionar à Família
+            {t('familySubmitBtn', 'Adicionar à Família')}
           </button>
 
           {formError && (
@@ -364,7 +384,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
       <div className="lg:col-span-2 bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="family-list-panel">
         <h2 className="text-sm font-bold text-white tracking-tight mb-5 flex items-center">
           <Heart className="w-4 h-4 mr-1.5 text-rose-500 fill-rose-500/20" />
-          Membros da Família Cadastrados
+          {t('familyRegisteredMembers', 'Membros da Família Cadastrados')}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[550px] overflow-y-auto pr-1">
@@ -373,7 +393,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
               <button 
                 onClick={() => handleDeleteMember(m.id, m.name)}
                 className="absolute top-4 right-4 text-slate-500 hover:text-rose-400 p-1"
-                title="Excluir membro"
+                title={t('familyDeleteMemberTooltip', 'Excluir membro')}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -410,13 +430,15 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
 
                  {m.notes && (
                   <p className="text-slate-400 text-xs leading-relaxed border-t border-slate-850/60 pt-2">
-                    <span className="text-slate-500 font-medium">Notas:</span> {m.notes}
+                    <span className="text-slate-500 font-medium">{t('familyNotesLabel', 'Notas:')}</span> {m.notes}
                   </p>
                 )}
 
                 {m.documents && m.documents.length > 0 && (
                   <div className="border-t border-slate-850/60 pt-2 space-y-1.5">
-                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Documentos ({m.documents.length}):</span>
+                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">
+                      {t('familyDocumentsCount', 'Documentos ({count}):').replace('{count}', String(m.documents.length))}
+                    </span>
                     <div className="space-y-1 max-h-24 overflow-y-auto">
                       {m.documents.map((doc, docIdx) => (
                         <a 
@@ -424,7 +446,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
                           href={doc.content}
                           download={doc.name}
                           className="flex items-center justify-between bg-slate-900 border border-slate-850 hover:border-slate-700 hover:bg-slate-950 px-2 py-1.5 rounded-lg text-[10px] text-slate-300 transition"
-                          title="Clique para baixar"
+                          title={t('familyDownloadTooltip', 'Clique para baixar')}
                         >
                           <div className="flex items-center space-x-1.5 truncate">
                             <span className="font-mono text-[8px] text-emerald-400 bg-emerald-950/40 px-1 py-0.5 rounded font-bold uppercase shrink-0">
@@ -432,7 +454,7 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
                             </span>
                             <span className="truncate max-w-[120px] font-medium" title={doc.name}>{doc.name}</span>
                           </div>
-                          <span className="text-indigo-400 hover:text-indigo-300 text-[10px] font-bold uppercase tracking-wider pl-1 shrink-0">Baixar</span>
+                          <span className="text-indigo-400 hover:text-indigo-300 text-[10px] font-bold uppercase tracking-wider pl-1 shrink-0">{t('familyDownloadBtn', 'Baixar')}</span>
                         </a>
                       ))}
                     </div>
@@ -445,8 +467,8 @@ export default function FamilyView({ onShowNotification }: FamilyViewProps) {
           {members.length === 0 && (
             <div className="col-span-2 text-center py-16 border border-dashed border-slate-800 rounded-2xl">
               <FolderHeart className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-slate-300">Família não catalogada</h3>
-              <p className="text-slate-500 text-xs mt-1">Insira os membros ao lado para acompanhar aniversários e informações médicas unificadas.</p>
+              <h3 className="text-sm font-bold text-slate-300">{t('familyEmptyTitle', 'Família não catalogada')}</h3>
+              <p className="text-slate-500 text-xs mt-1">{t('familyEmptyDesc', 'Insira os membros ao lado para acompanhar aniversários e informações médicas unificadas.')}</p>
             </div>
           )}
         </div>

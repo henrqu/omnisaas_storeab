@@ -108,11 +108,11 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
   // Helper to resolve monthly cost
   const getPlanMonthlyPrice = (tierName: string) => {
     if (tierName === 'Pro Plan' || tierName === 'Pro' || tierName === 'Vesta Pro') {
-      if (language === 'pt') return 59.90;
+      if (language.startsWith('pt')) return 59.90;
       return 11.99;
     }
     if (tierName === 'Enterprise') {
-      if (language === 'pt') return 199.90;
+      if (language.startsWith('pt')) return 199.90;
       return 39.99;
     }
     return 0.00;
@@ -165,7 +165,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
                       reader.readAsDataURL(file);
                     }
                   }}
-                  className="w-full text-xs text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-600/20 file:text-indigo-400 hover:file:bg-indigo-600/30 file:cursor-pointer cursor-pointer focus:outline-none"
+                  className="w-full text-xs text-slate-450 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-600/20 file:text-indigo-400 hover:file:bg-indigo-600/30 file:cursor-pointer cursor-pointer focus:outline-none"
                 />
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
                   <p className="text-slate-400 text-xs mt-1">{t('proPlanDesc', 'Ideal para autônomos, investidores e consultórios.')}</p>
                 </div>
                 <div className="text-white text-2xl font-black font-mono">
-                  {formatCurrency(getPlanMonthlyPrice('Pro Plan'), language)} <span className="text-xs text-slate-500 font-sans font-normal">/{language === 'pt' ? 'mês' : language === 'es' ? 'mes' : 'month'}</span>
+                  {formatCurrency(getPlanMonthlyPrice('Pro Plan'), language)} <span className="text-xs text-slate-500 font-sans font-normal">/{language.startsWith('pt') ? 'mês' : language.startsWith('es') ? 'mes' : 'month'}</span>
                 </div>
                 <ul className="text-xs text-slate-300 space-y-2.5 pt-3 border-t border-slate-900">
                   <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureCrm', 'CRM e Folhas Ilimitadas')}</li>

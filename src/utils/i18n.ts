@@ -4,9 +4,9 @@
  */
 
 import { createContext, useContext } from 'react';
-import enUS from '../../locales/en-US.json';
-import ptBR from '../../locales/pt-BR.json';
-import es from '../../locales/es.json';
+import enUS from '../locales/en-US.json';
+import ptBR from '../locales/pt-BR.json';
+import es from '../locales/es-ES.json';
 
 export type Language = 'pt-BR' | 'en-US' | 'es' | 'pt' | 'en';
 export type Theme = 'light' | 'dark';
@@ -24,12 +24,17 @@ export interface TranslationDict {
 // to maintain 100% backward compatibility with any legacy imports.
 export const translations: TranslationDict = {};
 
-const enUSKeys = Object.keys(enUS) as Array<keyof typeof enUS>;
-enUSKeys.forEach((key) => {
+const allKeys = Array.from(new Set([
+  ...Object.keys(enUS),
+  ...Object.keys(ptBR),
+  ...Object.keys(es)
+]));
+
+allKeys.forEach((key) => {
   translations[key] = {
-    en: enUS[key],
-    pt: (ptBR as any)[key] || enUS[key],
-    es: (es as any)[key] || enUS[key],
+    en: (enUS as any)[key] || (ptBR as any)[key] || (es as any)[key] || key,
+    pt: (ptBR as any)[key] || (enUS as any)[key] || (es as any)[key] || key,
+    es: (es as any)[key] || (enUS as any)[key] || (ptBR as any)[key] || key,
   };
 });
 
@@ -142,10 +147,24 @@ export interface LanguageThemeContextProps {
 
 export const LanguageThemeContext = createContext<LanguageThemeContextProps | undefined>(undefined);
 
-export const useLanguageTheme = () => {
+export const useTranslation = () => {
   const context = useContext(LanguageThemeContext);
   if (!context) {
-    throw new Error('useLanguageTheme must be used within a LanguageThemeProvider');
+    throw new Error('useTranslation must be used within a LanguageThemeProvider');
   }
-  return context;
+  
+  // Normalize language to 2-letter format ('pt', 'es', 'en')
+  // to ensure compatibility with existing language comparisons across the codebase
+  const rawLanguage = context.language;
+  const language = rawLanguage.toLowerCase().startsWith('pt') ? 'pt' : rawLanguage.toLowerCase().startsWith('es') ? 'es' : 'en';
+
+  return {
+    ...context,
+    language,
+    rawLanguage
+  };
+};
+
+export const useLanguageTheme = () => {
+  return useTranslation();
 };

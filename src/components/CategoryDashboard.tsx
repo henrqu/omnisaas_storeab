@@ -41,7 +41,7 @@ export default function CategoryDashboard({
   onAddTransaction,
   onDeleteTransaction
 }: CategoryDashboardProps) {
-  const { language, currency } = useLanguageTheme();
+  const { language, currency, t } = useLanguageTheme();
   const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
   
   // Local storage for Investment specifically for this category
@@ -199,7 +199,9 @@ export default function CategoryDashboard({
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-bold tracking-widest text-[#1E73BE] uppercase font-mono bg-blue-500/10 px-2 py-0.5 rounded">Orçamento de Categoria</span>
+              <span className="text-[10px] font-bold tracking-widest text-[#1E73BE] uppercase font-mono bg-blue-500/10 px-2 py-0.5 rounded">
+                {t('categoryBudgetTitle', 'Orçamento de Categoria')}
+              </span>
               <span className="text-xs text-slate-500 font-mono">Teto: {formatCurrency(budgetLimit, language)}</span>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight">{category}</h1>
@@ -207,7 +209,7 @@ export default function CategoryDashboard({
         </div>
         <div className="flex items-center space-x-2 font-mono text-xs text-slate-400 bg-slate-900/30 border border-slate-800/50 px-3 py-1.5 rounded-xl">
           <Calendar className="w-3.5 h-3.5 text-slate-500" />
-          <span>Controle Operacional Integrado</span>
+          <span>{t('integratedOperationalControl', 'Controle Operacional Integrado')}</span>
         </div>
       </div>
 
@@ -216,7 +218,9 @@ export default function CategoryDashboard({
         {/* RECEITA */}
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase font-mono">Receita / Salário</span>
+            <span className="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase font-mono">
+              {t('incomeSalary', 'Receita / Salário')}
+            </span>
             <div className="text-xl font-black text-emerald-300 font-mono">{formatCurrency(totalReceita, language)}</div>
             <button 
               onClick={() => {
@@ -225,7 +229,7 @@ export default function CategoryDashboard({
               }}
               className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold underline transition flex items-center mt-1"
             >
-              <Plus className="w-3 h-3 mr-0.5" /> Adicionar Receita
+              <Plus className="w-3 h-3 mr-0.5" /> {t('addIncome', 'Adicionar Receita')}
             </button>
           </div>
           <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl">
@@ -236,7 +240,9 @@ export default function CategoryDashboard({
         {/* INVESTIR */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-extrabold tracking-widest text-blue-400 uppercase font-mono">Investimento Alvo</span>
+            <span className="text-[10px] font-extrabold tracking-widest text-blue-400 uppercase font-mono">
+              {t('targetInvestment', 'Investimento Alvo')}
+            </span>
             <div className="text-xl font-black text-blue-300 font-mono">{formatCurrency(totalInvestir, language)}</div>
             <button 
               onClick={() => {
@@ -245,7 +251,7 @@ export default function CategoryDashboard({
               }}
               className="text-[10px] text-blue-400 hover:text-blue-300 font-bold underline transition flex items-center mt-1"
             >
-              Ajustar Alvo
+              {t('adjustTarget', 'Ajustar Alvo')}
             </button>
           </div>
           <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl">
@@ -256,10 +262,12 @@ export default function CategoryDashboard({
         {/* DESPESAS */}
         <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-5 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-extrabold tracking-widest text-rose-400 uppercase font-mono">Total Despesas</span>
+            <span className="text-[10px] font-extrabold tracking-widest text-rose-400 uppercase font-mono">
+              {t('totalExpenses', 'Total Despesas')}
+            </span>
             <div className="text-xl font-black text-rose-300 font-mono">{formatCurrency(totalDespesas, language)}</div>
             <span className="text-[9px] text-rose-400/70 font-mono block">
-              {fixedExpenses.length} fixas + {variableExpenses.length} variáveis
+              {fixedExpenses.length} {t('fixedLabel', 'fixas')} + {variableExpenses.length} {t('variableLabel', 'variáveis')}
             </span>
           </div>
           <div className="p-3 bg-rose-500/20 text-rose-400 rounded-xl">
@@ -270,18 +278,20 @@ export default function CategoryDashboard({
         {/* SALDO RESTANTE */}
         <div className={`${totalSaldo >= 0 ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-rose-500/15 border-rose-500/30'} border rounded-2xl p-5 flex items-center justify-between transition-colors`}>
           <div className="space-y-1">
-            <span className="text-[10px] font-extrabold tracking-widest uppercase font-mono text-indigo-400">Saldo Restante</span>
+            <span className="text-[10px] font-extrabold tracking-widest uppercase font-mono text-indigo-400">
+              {t('remainingBalance', 'Saldo Restante')}
+            </span>
             <div className={`text-xl font-black font-mono ${totalSaldo >= 0 ? 'text-indigo-300' : 'text-rose-400'}`}>
               {formatCurrency(totalSaldo, language)}
             </div>
             <span className="text-[9px] text-slate-500 font-mono flex items-center">
               {totalSaldo >= 0 ? (
                 <span className="text-emerald-400 flex items-center font-bold">
-                  <CheckCircle2 className="w-3 h-3 mr-0.5" /> Positivo
+                  <CheckCircle2 className="w-3 h-3 mr-0.5" /> {t('positive', 'Positivo')}
                 </span>
               ) : (
                 <span className="text-rose-400 flex items-center font-bold">
-                  <AlertTriangle className="w-3 h-3 mr-0.5" /> Atenção: Estourado!
+                  <AlertTriangle className="w-3 h-3 mr-0.5" /> {t('overBudgetWarning', 'Atenção: Estourado!')}
                 </span>
               )}
             </span>
@@ -303,7 +313,7 @@ export default function CategoryDashboard({
           }`}
         >
           <Wallet className="w-3.5 h-3.5" />
-          <span>Receita</span>
+          <span>{t('income', 'Receita')}</span>
         </button>
 
         <button 
@@ -315,7 +325,7 @@ export default function CategoryDashboard({
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
-          <span>Despesa Fixa / Comum</span>
+          <span>{t('fixedExpenseLabel', 'Despesa Fixa / Comum')}</span>
         </button>
 
         <button 
@@ -327,7 +337,7 @@ export default function CategoryDashboard({
           }`}
         >
           <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-          <span>Despesa Variável</span>
+          <span>{t('variableExpense', 'Despesa Variável')}</span>
         </button>
       </div>
 
@@ -341,7 +351,11 @@ export default function CategoryDashboard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-sm font-bold text-white tracking-tight flex items-center">
                 <Filter className="w-4 h-4 mr-1.5 text-blue-400" />
-                {activeSubTab === 'income' ? 'Lançamentos de Receitas' : activeSubTab === 'fixed' ? 'Despesas Fixas Comuns' : 'Despesas Variáveis'}
+                {activeSubTab === 'income' 
+                  ? t('incomeEntries', 'Lançamentos de Receitas') 
+                  : activeSubTab === 'fixed' 
+                    ? t('fixedExpensesLabel', 'Despesas Fixas Comuns') 
+                    : t('variableExpensesLabel', 'Despesas Variáveis')}
               </h3>
               <button 
                 onClick={() => setShowAddModal(true)}
@@ -354,7 +368,7 @@ export default function CategoryDashboard({
                 }`}
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>+ Adicionar</span>
+                <span>{t('addBtn', '+ Adicionar')}</span>
               </button>
             </div>
 
@@ -365,7 +379,7 @@ export default function CategoryDashboard({
                 <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
                 <input 
                   type="text"
-                  placeholder="Filtrar por nome..."
+                  placeholder={t('filterByName', 'Filtrar por nome...')}
                   value={nameFilter}
                   onChange={(e) => setNameFilter(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-sans"
@@ -380,7 +394,7 @@ export default function CategoryDashboard({
                   onChange={(e) => setSubcategoryFilter(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-sans appearance-none"
                 >
-                  <option value="">Todas Categorias</option>
+                  <option value="">{t('allCategories', 'Todas Categorias')}</option>
                   {allSubcategories.map(sub => (
                     <option key={sub} value={sub}>{sub}</option>
                   ))}
@@ -404,25 +418,25 @@ export default function CategoryDashboard({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-800 text-[10px] text-slate-400 font-mono uppercase tracking-wider">
-                    <th className="py-3 px-3">Data</th>
-                    <th className="py-3 px-3">Nome</th>
-                    <th className="py-3 px-3">Categoria</th>
-                    <th className="py-3 px-3 text-right">Valor</th>
-                    <th className="py-3 px-3 text-center">Ações</th>
+                    <th className="py-3 px-3">{t('date', 'Data')}</th>
+                    <th className="py-3 px-3">{t('name', 'Nome')}</th>
+                    <th className="py-3 px-3">{t('category', 'Categoria')}</th>
+                    <th className="py-3 px-3 text-right">{t('value', 'Valor')}</th>
+                    <th className="py-3 px-3 text-center">{t('actions', 'Ações')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-900">
                   {filteredList.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-xs text-slate-500 font-medium">
-                        Nenhum lançamento encontrado com os filtros ativos.
+                        {t('noEntriesFound', 'Nenhum lançamento encontrado com os filtros ativos.')}
                       </td>
                     </tr>
                   ) : (
                     filteredList.map((item) => (
                       <tr key={item.id} className="text-xs hover:bg-slate-950/40 transition">
                         <td className="py-3 px-3 font-mono text-slate-400">
-                          {new Date(item.date).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}
+                          {new Date(item.date).toLocaleDateString(language.startsWith('pt') ? 'pt-BR' : 'en-US', {day: '2-digit', month: '2-digit'})}
                         </td>
                         <td className="py-3 px-3 font-semibold text-slate-200">
                           {item.description}
@@ -440,7 +454,7 @@ export default function CategoryDashboard({
                           <button 
                             onClick={() => onDeleteTransaction(item.id)}
                             className="p-1 hover:text-rose-400 text-slate-500 transition rounded-lg hover:bg-rose-500/5"
-                            title="Excluir Lançamento"
+                            title={t('deleteEntry', 'Excluir Lançamento')}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -455,7 +469,7 @@ export default function CategoryDashboard({
             {/* Total of what was filtered (Footer) */}
             <div className="flex justify-between items-center bg-slate-950/50 border border-slate-850 p-4 rounded-xl mt-4">
               <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                Total do que foi filtrado:
+                {t('filteredTotalLabel', 'Total do que foi filtrado:')}
               </div>
               <div className="text-sm font-black font-mono text-white">
                 {formatCurrency(filteredTotal, language)}
@@ -470,12 +484,12 @@ export default function CategoryDashboard({
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 space-y-6">
             <h3 className="text-sm font-bold text-white tracking-tight flex items-center">
               <PieChart className="w-4 h-4 mr-1.5 text-blue-400" />
-              Distribuição por Categoria
+              {t('categoryDistribution', 'Distribuição por Categoria')}
             </h3>
 
             {totalDespesas === 0 ? (
               <div className="py-16 text-center text-xs text-slate-500">
-                Adicione despesas para visualizar o gráfico de distribuição.
+                {t('addExpensesToViewChart', 'Adicione despesas para visualizar o gráfico de distribuição.')}
               </div>
             ) : (
               <div className="flex flex-col items-center space-y-6">
@@ -498,7 +512,7 @@ export default function CategoryDashboard({
 
                       return (
                         <circle 
-                          key={slice.name}
+                           key={slice.name}
                           cx="60" 
                           cy="60" 
                           r={radius} 
@@ -514,7 +528,7 @@ export default function CategoryDashboard({
                     })}
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[10px] text-slate-500 uppercase font-mono tracking-widest font-bold">Despesas</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-mono tracking-widest font-bold">{t('expenses', 'Despesas')}</span>
                     <span className="text-sm font-extrabold text-white font-mono">
                       {formatCurrency(totalDespesas, language)}
                     </span>
@@ -545,8 +559,8 @@ export default function CategoryDashboard({
             {/* Bottom auxiliary section: Gerenciar Categorias */}
             <div className="border-t border-slate-800 pt-4 mt-2">
               <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-950/40 p-3 rounded-xl border border-slate-850/60">
-                <span className="font-medium">Gerenciar categorias de custos</span>
-                <span className="text-[#1E73BE] hover:underline cursor-pointer font-bold transition">Acessar canais</span>
+                <span className="font-medium">{t('manageCostCategories', 'Gerenciar categorias de custos')}</span>
+                <span className="text-[#1E73BE] hover:underline cursor-pointer font-bold transition">{t('accessChannels', 'Acessar canais')}</span>
               </div>
             </div>
 
@@ -573,12 +587,12 @@ export default function CategoryDashboard({
               
               <h3 className="text-sm font-bold text-white mb-4 flex items-center">
                 <PiggyBank className="w-4 h-4 mr-1.5 text-blue-400" />
-                Ajustar Alvo de Investimento ({category})
+                {t('adjustInvestmentTarget', 'Ajustar Alvo de Investimento')} ({category})
               </h3>
 
               <form onSubmit={handleSaveInvestment} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Valor Alvo ({currencySymbol})</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('targetInvestment', 'Investimento Alvo')} ({currencySymbol})</label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-2 text-slate-500 font-bold text-xs">{currencySymbol}</span>
                     <input 
@@ -598,13 +612,13 @@ export default function CategoryDashboard({
                     onClick={() => setShowInvestModal(false)}
                     className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 font-bold text-xs py-2 rounded-xl transition"
                   >
-                    Cancelar
+                    {t('cancel', 'Cancelar')}
                   </button>
                   <button 
                     type="submit"
                     className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2 rounded-xl transition"
                   >
-                    Salvar Alvo
+                    {t('save', 'Salvar')}
                   </button>
                 </div>
               </form>
@@ -634,24 +648,24 @@ export default function CategoryDashboard({
                 {activeSubTab === 'income' ? (
                   <>
                     <Wallet className="w-4 h-4 mr-1.5 text-emerald-400" />
-                    Adicionar Salário / Receita ({category})
+                    {t('addIncome', 'Adicionar Receita')} ({category})
                   </>
                 ) : activeSubTab === 'fixed' ? (
                   <>
                     <FileText className="w-4 h-4 mr-1.5 text-indigo-400" />
-                    Adicionar Despesa Fixa ({category})
+                    {t('fixedExpenseLabel', 'Despesa Fixa / Comum')} ({category})
                   </>
                 ) : (
                   <>
                     <TrendingDown className="w-4 h-4 mr-1.5 text-rose-400" />
-                    Adicionar Despesa Variável ({category})
+                    {t('variableExpense', 'Despesa Variável')} ({category})
                   </>
                 )}
               </h3>
 
               <form onSubmit={handleAddItemSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Nome / Descrição</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('name', 'Nome')} / {t('tableDesc', 'Descrição')}</label>
                   <input 
                     type="text"
                     value={newItemName}
@@ -664,7 +678,7 @@ export default function CategoryDashboard({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Categoria Específica (Subcategoria)</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('category', 'Categoria')}</label>
                   <input 
                     type="text"
                     value={newItemSubcategory}
@@ -676,7 +690,7 @@ export default function CategoryDashboard({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Valor ({currencySymbol})</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('value', 'Valor')} ({currencySymbol})</label>
                     <div className="relative">
                       <span className="absolute left-3 top-2 text-slate-500 font-bold text-xs">{currencySymbol}</span>
                       <input 
@@ -691,7 +705,7 @@ export default function CategoryDashboard({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Data</label>
+                    <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('date', 'Data')}</label>
                     <input 
                       type="date"
                       value={newItemDate}
@@ -708,7 +722,7 @@ export default function CategoryDashboard({
                     onClick={() => setShowAddModal(false)}
                     className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 font-bold text-xs py-2.5 rounded-xl transition"
                   >
-                    Cancelar
+                    {t('cancel', 'Cancelar')}
                   </button>
                   <button 
                     type="submit"
@@ -720,7 +734,7 @@ export default function CategoryDashboard({
                           : 'bg-rose-600 hover:bg-rose-500'
                     }`}
                   >
-                    Confirmar Lançamento
+                    {t('add', 'Confirmar')}
                   </button>
                 </div>
               </form>

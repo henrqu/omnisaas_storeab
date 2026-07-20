@@ -28,7 +28,7 @@ interface CrmSalesViewProps {
 }
 
 export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) {
-  const { language, currency } = useLanguageTheme();
+  const { language, currency, t } = useLanguageTheme();
   const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
   const [activeTab, setActiveTab] = useState<'products' | 'customers' | 'sales'>('products');
   
@@ -73,22 +73,22 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
     if (!prodName.trim()) {
-      setProdError('O nome do produto é obrigatório.');
+      setProdError(t('crmErrNameRequired', 'O nome do produto é obrigatório.'));
       return;
     }
     if (!prodSku.trim()) {
-      setProdError('Informe um código SKU exclusivo.');
+      setProdError(t('crmErrSkuRequired', 'Informe um código SKU exclusivo.'));
       return;
     }
     const priceNum = parseFloat(prodPrice);
     const costNum = parseFloat(prodCost);
 
     if (isNaN(priceNum) || priceNum <= 0) {
-      setProdError('O preço de venda deve ser maior que zero.');
+      setProdError(t('crmErrPricePositive', 'O preço de venda deve ser maior que zero.'));
       return;
     }
     if (isNaN(costNum) || costNum < 0) {
-      setProdError('O custo operacional deve ser maior ou igual a zero.');
+      setProdError(t('crmErrCostPositive', 'O custo operacional deve ser maior ou igual a zero.'));
       return;
     }
     setProdError('');
@@ -98,7 +98,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
       sku: prodSku.trim().toUpperCase(),
       price: priceNum,
       cost: costNum,
-      description: prodDesc.trim() || 'Sem descrição.'
+      description: prodDesc.trim() || t('crmNoDescription', 'Sem descrição.')
     });
 
     setProducts(LocalDatabase.getProducts());
@@ -108,17 +108,17 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
     setProdPrice('');
     setProdCost('');
     setProdDesc('');
-    onShowNotification('Produto Catalogado', `"${newProd.name}" adicionado ao inventário com 100 unidades padrão.`, 'success');
+    onShowNotification(t('crmProductCataloged', 'Produto Catalogado'), `"${newProd.name}" ${t('crmProductCatalogedDesc', 'adicionado ao inventário com 100 unidades padrão.')}`, 'success');
   };
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!custName.trim()) {
-      setCustError('Por favor, informe o nome do cliente.');
+      setCustError(t('crmErrCustNameRequired', 'Por favor, informe o nome do cliente.'));
       return;
     }
     if (!custEmail.trim() || !custEmail.includes('@')) {
-      setCustError('Informe um e-mail de contato válido.');
+      setCustError(t('crmErrEmailInvalid', 'Informe um e-mail de contato válido.'));
       return;
     }
     setCustError('');
@@ -131,8 +131,8 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
     const newCust = LocalDatabase.addCustomer({
       name: custName.trim(),
       email: custEmail.trim(),
-      phone: custPhone.trim() || 'Não cadastrado',
-      tags: tagsArr.length > 0 ? tagsArr : ['Novo']
+      phone: custPhone.trim() || t('crmNotRegistered', 'Não cadastrado'),
+      tags: tagsArr.length > 0 ? tagsArr : [t('crmNew', 'Novo')]
     });
 
     setCustomers(LocalDatabase.getCustomers());
@@ -140,29 +140,29 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
     setCustEmail('');
     setCustPhone('');
     setCustTags('');
-    onShowNotification('Cliente Registrado', `"${newCust.name}" adicionado com sucesso ao CRM.`, 'success');
+    onShowNotification(t('crmCustomerRegistered', 'Cliente Registrado'), `"${newCust.name}" ${t('crmCustomerRegisteredDesc', 'adicionado com sucesso ao CRM.')}`, 'success');
   };
 
   const handleRecordSale = (e: React.FormEvent) => {
     e.preventDefault();
     if (!sellProdId) {
-      setSellError('Selecione um produto.');
+      setSellError(t('crmErrSelectProduct', 'Selecione um produto.'));
       return;
     }
     if (!sellCustId) {
-      setSellError('Selecione um cliente para vincular a venda.');
+      setSellError(t('crmErrSelectCustomer', 'Selecione um cliente para vincular a venda.'));
       return;
     }
     const qtyNum = parseInt(sellQty);
     if (isNaN(qtyNum) || qtyNum <= 0) {
-      setSellError('A quantidade vendida deve ser no mínimo 1.');
+      setSellError(t('crmErrMinQuantity', 'A quantidade vendida deve ser no mínimo 1.'));
       return;
     }
 
     const prod = products.find(p => p.id === sellProdId);
     const inv = inventory.find(i => i.product_id === sellProdId);
     if (prod && inv && inv.quantity < qtyNum && inv.quantity < 9999) {
-      setSellError(`Quantidade insuficiente em estoque. Disponível: ${inv.quantity} unidades.`);
+      setSellError(`${t('crmErrInsufficientStock', 'Quantidade insuficiente em estoque. Disponível:')} ${inv.quantity} ${t('crmUnits', 'unidades')}.`);
       return;
     }
     setSellError('');
@@ -187,20 +187,20 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
     setSellProdId('');
     setSellCustId('');
     setSellQty('1');
-    onShowNotification('Venda Registrada! 🛒', `Pedido gerado com sucesso. Valor total: ${formatCurrency(newSale.total_amount, language)}.`, 'success');
+    onShowNotification(t('crmSaleRecorded', 'Venda Registrada! 🛒'), `${t('crmSaleRecordedDesc', 'Pedido gerado com sucesso. Valor total:')} ${formatCurrency(newSale.total_amount, language)}.`, 'success');
   };
 
   const handleDeleteProduct = (id: string, name: string) => {
     const updated = LocalDatabase.deleteProduct(id);
     setProducts(updated);
     setInventory(LocalDatabase.getInventory());
-    onShowNotification('Produto Excluído', `"${name}" removido do catálogo.`, 'info');
+    onShowNotification(t('crmProductDeleted', 'Produto Excluído'), `"${name}" ${t('crmProductDeletedDesc', 'removido do catálogo.')}`, 'info');
   };
 
   const handleDeleteCustomer = (id: string, name: string) => {
     const updated = LocalDatabase.deleteCustomer(id);
     setCustomers(updated);
-    onShowNotification('Cliente Removido', `${name} removido do CRM.`, 'info');
+    onShowNotification(t('crmCustomerRemoved', 'Cliente Removido'), `${name} ${t('crmCustomerRemovedDesc', 'removido do CRM.')}`, 'info');
   };
 
   return (
@@ -217,7 +217,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
           id="tab-btn-products"
         >
           <Package className="w-4 h-4" />
-          <span>Catálogo de Produtos & Estoque</span>
+          <span>{t('crmProductsTab', 'Catálogo de Produtos & Estoque')}</span>
         </button>
 
         <button 
@@ -230,7 +230,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
           id="tab-btn-customers"
         >
           <Users className="w-4 h-4" />
-          <span>Gestão CRM de Clientes</span>
+          <span>{t('crmCustomersTab', 'Gestão CRM de Clientes')}</span>
         </button>
 
         <button 
@@ -243,7 +243,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
           id="tab-btn-sales"
         >
           <ShoppingCart className="w-4 h-4" />
-          <span>Ponto de Vendas (PDV) & Pedidos</span>
+          <span>{t('crmPosSalesTab', 'Ponto de Vendas (PDV) & Pedidos')}</span>
         </button>
       </div>
 
@@ -255,13 +255,13 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 h-fit">
             <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
               <PlusCircle className="w-4 h-4 mr-1.5 text-indigo-400" />
-              Adicionar Produto ao Catálogo
+              {t('crmAddProduct', 'Adicionar Produto ao Catálogo')}
             </h3>
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Nome do Produto / Serviço</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmProductName', 'Nome do Produto / Serviço')}</label>
                 <input 
-                  type="text" placeholder="Ex: Licença Mensal Pro"
+                  type="text" placeholder={t('crmProductPlaceholder', 'Ex: Licença Mensal Pro')}
                   value={prodName} onChange={(e) => setProdName(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500"
                 />
@@ -269,7 +269,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Código SKU</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmSkuCode', 'Código SKU')}</label>
                   <input 
                     type="text" placeholder="OS-PRO-M"
                     value={prodSku} onChange={(e) => setProdSku(e.target.value)}
@@ -277,7 +277,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Preço de Venda ({currencySymbol})</label>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmSalePrice', 'Preço de Venda')} ({currencySymbol})</label>
                   <input 
                     type="number" step="0.01" placeholder="299.00"
                     value={prodPrice} onChange={(e) => setProdPrice(e.target.value)}
@@ -287,7 +287,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Custo de Operação / Aquisição ({currencySymbol})</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmOperatingCost', 'Custo de Operação / Aquisição')} ({currencySymbol})</label>
                 <input 
                   type="number" step="0.01" placeholder="45.00"
                   value={prodCost} onChange={(e) => setProdCost(e.target.value)}
@@ -296,9 +296,9 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Descrição</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmDescription', 'Descrição')}</label>
                 <textarea 
-                  rows={3} placeholder="Escreva especificações técnicas ou comerciais do produto..."
+                  rows={3} placeholder={t('crmDescPlaceholder', 'Escreva especificações técnicas ou comerciais do produto...')}
                   value={prodDesc} onChange={(e) => setProdDesc(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none"
                 />
@@ -308,7 +308,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                 type="submit"
                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 rounded-xl transition"
               >
-                Cadastrar Produto
+                {t('crmRegisterProduct', 'Cadastrar Produto')}
               </button>
 
               {prodError && (
@@ -322,7 +322,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
 
           {/* Listagem */}
           <div className="xl:col-span-2 bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="products-catalog-panel">
-            <h2 className="text-sm font-bold text-white tracking-tight mb-4">Catálogo de Produtos & Controle Físico de Estoque</h2>
+            <h2 className="text-sm font-bold text-white tracking-tight mb-4">{t('crmProductCatalogTitle', 'Catálogo de Produtos & Controle Físico de Estoque')}</h2>
             <div className="space-y-4 max-h-[550px] overflow-y-auto pr-1">
               {products.map((p) => {
                 const inv = inventory.find(i => i.product_id === p.id);
@@ -339,15 +339,15 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
 
                     <div className="flex items-center justify-between md:justify-end space-x-6 mt-4 md:mt-0 pt-3 md:pt-0 border-t border-slate-850 md:border-transparent">
                       <div className="text-right">
-                        <span className="text-xs text-slate-500 block uppercase font-medium">Preço</span>
+                        <span className="text-xs text-slate-500 block uppercase font-medium">{t('crmPrice', 'Preço')}</span>
                         <span className="text-emerald-400 font-bold text-sm">{formatCurrency(p.price, language)}</span>
                       </div>
 
                       <div className="text-right">
-                        <span className="text-xs text-slate-500 block uppercase font-medium">Estoque</span>
+                        <span className="text-xs text-slate-500 block uppercase font-medium">{t('crmStock', 'Estoque')}</span>
                         <span className={`font-bold text-sm flex items-center ${isLowStock ? 'text-amber-400' : 'text-slate-300'}`}>
                           {isLowStock && <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-500 animate-pulse" />}
-                          {inv?.quantity === 9999 ? 'Infinito' : `${inv?.quantity} un`}
+                          {inv?.quantity === 9999 ? t('crmInfinite', 'Infinito') : `${inv?.quantity} un`}
                         </span>
                       </div>
 
@@ -362,7 +362,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                 );
               })}
               {products.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-12">Nenhum produto catalogado.</p>
+                <p className="text-xs text-slate-500 text-center py-12">{t('crmNoProducts', 'Nenhum produto catalogado.')}</p>
               )}
             </div>
           </div>
@@ -378,11 +378,11 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 h-fit">
             <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
               <PlusCircle className="w-4 h-4 mr-1.5 text-indigo-400" />
-              Cadastrar Cliente CRM
+              {t('crmAddCustomer', 'Cadastrar Cliente CRM')}
             </h3>
             <form onSubmit={handleAddCustomer} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Nome Completo</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmFullName', 'Nome Completo')}</label>
                 <input 
                   type="text" placeholder="Ex: Rodrigo Fontes"
                   value={custName} onChange={(e) => setCustName(e.target.value)}
@@ -391,7 +391,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">E-mail de Contato</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmEmail', 'E-mail de Contato')}</label>
                 <input 
                   type="email" placeholder="Ex: rodrigo@fontescorp.com"
                   value={custEmail} onChange={(e) => setCustEmail(e.target.value)}
@@ -400,7 +400,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Telefone / WhatsApp</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmPhone', 'Telefone / WhatsApp')}</label>
                 <input 
                   type="text" placeholder="Ex: (11) 98765-4321"
                   value={custPhone} onChange={(e) => setCustPhone(e.target.value)}
@@ -409,7 +409,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Tags de Segmentação (separadas por vírgula)</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmTags', 'Tags de Segmentação (separadas por vírgula)')}</label>
                 <input 
                   type="text" placeholder="Ex: VIP, Recorrente, Lead Qualificado..."
                   value={custTags} onChange={(e) => setCustTags(e.target.value)}
@@ -421,7 +421,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                 type="submit"
                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 rounded-xl transition"
               >
-                Salvar Cliente CRM
+                {t('crmSaveCustomer', 'Salvar Cliente CRM')}
               </button>
 
               {custError && (
@@ -435,14 +435,14 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
 
           {/* Listagem CRM */}
           <div className="xl:col-span-2 bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="customers-list-panel">
-            <h2 className="text-sm font-bold text-white tracking-tight mb-4">Portfólio de Clientes Ativos (CRM)</h2>
+            <h2 className="text-sm font-bold text-white tracking-tight mb-4">{t('crmCustomerPortfolio', 'Portfólio de Clientes Ativos (CRM)')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[550px] overflow-y-auto pr-1">
               {customers.map((c) => (
                 <div key={c.id} className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl relative hover:border-slate-800 transition">
                   <button 
                     onClick={() => handleDeleteCustomer(c.id, c.name)}
                     className="absolute top-4 right-4 text-slate-500 hover:text-rose-400 p-1"
-                    title="Remover cliente"
+                    title={t('crmRemoveCustomer', 'Remover cliente')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -465,7 +465,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                 </div>
               ))}
               {customers.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-12 col-span-2">Nenhum cliente registrado no CRM.</p>
+                <p className="text-xs text-slate-500 text-center py-12 col-span-2">{t('crmNoCustomers', 'Nenhum cliente registrado no CRM.')}</p>
               )}
             </div>
           </div>
@@ -481,16 +481,16 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 h-fit">
             <h3 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
               <ShoppingCart className="w-4 h-4 mr-1.5 text-emerald-400" />
-              Ponto de Vendas PDV (Novo Pedido)
+              {t('crmNewOrder', 'Ponto de Vendas PDV (Novo Pedido)')}
             </h3>
             <form onSubmit={handleRecordSale} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Selecionar Cliente CRM</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmSelectClient', 'Selecionar Cliente CRM')}</label>
                 <select 
                   value={sellCustId} onChange={(e) => setSellCustId(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="">-- Selecione o Cliente --</option>
+                  <option value="">-- {t('crmSelectClientOption', 'Selecione o Cliente')} --</option>
                   {customers.map(c => (
                     <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                   ))}
@@ -498,12 +498,12 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Selecionar Produto / Serviço</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmSelectProduct', 'Selecionar Produto / Serviço')}</label>
                 <select 
                   value={sellProdId} onChange={(e) => setSellProdId(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="">-- Selecione o Produto --</option>
+                  <option value="">-- {t('crmSelectProductOption', 'Selecione o Produto')} --</option>
                   {products.map(p => (
                     <option key={p.id} value={p.id}>{p.name} - {formatCurrency(p.price, language)}</option>
                   ))}
@@ -511,7 +511,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Quantidade</label>
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('crmQuantity', 'Quantidade')}</label>
                 <input 
                   type="number" min="1" placeholder="1"
                   value={sellQty} onChange={(e) => setSellQty(e.target.value)}
@@ -521,10 +521,10 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
 
               <button 
                 type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-lg shadow-emerald-950/20"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-lg shadow-emerald-950/20 animate-pulse-once"
                 id="submit-sale-btn"
               >
-                Gerar Venda & Emitir Recibo
+                {t('crmGenerateSale', 'Gerar Venda & Emitir Recibo')}
               </button>
 
               {sellError && (
@@ -538,7 +538,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
 
           {/* Histórico Vendas */}
           <div className="xl:col-span-2 bg-slate-900/30 border border-slate-800 rounded-2xl p-6" id="sales-history-panel">
-            <h2 className="text-sm font-bold text-white tracking-tight mb-4">Registro Histórico de Pedidos ERP</h2>
+            <h2 className="text-sm font-bold text-white tracking-tight mb-4">{t('crmSalesHistory', 'Registro Histórico de Pedidos ERP')}</h2>
             <div className="space-y-3 max-h-[550px] overflow-y-auto pr-1">
               {sales.map((s) => {
                 const prod = products.find(p => p.id === s.product_id);
@@ -547,16 +547,16 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                   <div key={s.id} className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl flex justify-between items-center hover:border-slate-800 transition">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-900/30 font-bold text-[9px] px-2 py-0.5 rounded-full uppercase">CONCLUÍDO</span>
+                        <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-900/30 font-bold text-[9px] px-2 py-0.5 rounded-full uppercase">{t('crmCompleted', 'CONCLUÍDO')}</span>
                         <span className="text-[10px] text-slate-500">ID: #{s.id.substring(0, 6).toUpperCase()}</span>
                       </div>
-                      <p className="text-sm font-bold text-slate-200 mt-1.5">{prod?.name || 'Serviço Personalizado'}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Cliente: <span className="font-semibold">{cust?.name || 'Venda Consumidor Final'}</span></p>
+                      <p className="text-sm font-bold text-slate-200 mt-1.5">{prod?.name || t('crmCustomService', 'Serviço Personalizado')}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{t('crmCustomerLabel', 'Cliente:')} <span className="font-semibold">{cust?.name || t('crmFinalConsumer', 'Venda Consumidor Final')}</span></p>
                     </div>
 
                     <div className="text-right flex items-center space-x-5">
                       <div>
-                        <span className="text-[10px] text-slate-500 block">Quantidade: {s.quantity} un</span>
+                        <span className="text-[10px] text-slate-500 block">{t('crmQuantityLabel', 'Quantidade:')} {s.quantity}</span>
                         <span className="text-white font-bold text-sm">{formatCurrency(s.total_amount, language)}</span>
                       </div>
                       <button 
@@ -565,16 +565,16 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                           setReceiptProduct(prod || null);
                           setActiveReceipt(s);
                         }}
-                        className="text-indigo-400 hover:text-indigo-300 font-bold text-xs"
+                        className="text-indigo-400 hover:text-indigo-300 font-bold text-xs cursor-pointer"
                       >
-                        Recibo
+                        {t('crmReceipt', 'Recibo')}
                       </button>
                     </div>
                   </div>
                 );
               })}
               {sales.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-12">Nenhum pedido faturado.</p>
+                <p className="text-xs text-slate-500 text-center py-12">{t('crmNoSales', 'Nenhum pedido faturado.')}</p>
               )}
             </div>
           </div>
@@ -590,7 +590,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
             <div className="bg-slate-950 px-5 py-4 border-b border-slate-850 flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <ShoppingCart className="text-indigo-400 w-5 h-5" />
-                <span className="text-sm font-bold text-white uppercase tracking-wider">Recibo de Venda Corporativa</span>
+                <span className="text-sm font-bold text-white uppercase tracking-wider">{t('crmCorporateReceipt', 'Recibo de Venda Corporativa')}</span>
               </div>
               <button 
                 onClick={() => {
@@ -608,25 +608,25 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
             <div className="p-6 space-y-5 text-xs text-slate-300">
               {/* Receipt Header info */}
               <div className="text-center pb-4 border-b border-slate-800/80">
-                <span className="bg-emerald-950/50 border border-emerald-900/30 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Faturamento Concluído</span>
-                <h4 className="text-sm font-bold text-white mt-3">Pedido #{activeReceipt.id.substring(0,8).toUpperCase()}</h4>
-                <p className="text-slate-500 mt-0.5">Faturado em: {new Date(activeReceipt.date).toLocaleString('pt-BR')}</p>
+                <span className="bg-emerald-950/50 border border-emerald-900/30 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase">{t('crmBillingCompleted', 'Faturamento Concluído')}</span>
+                <h4 className="text-sm font-bold text-white mt-3">{t('crmOrderLabel', 'Pedido')} #{activeReceipt.id.substring(0,8).toUpperCase()}</h4>
+                <p className="text-slate-500 mt-0.5">{t('crmBilledOn', 'Faturado em')}: {new Date(activeReceipt.date).toLocaleString(language === 'pt-BR' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US')}</p>
               </div>
 
               {/* CRM Client breakdown */}
               <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-850 space-y-1">
-                <span className="text-slate-500 block uppercase font-medium text-[9px]">Cliente Adquirente</span>
-                <p className="text-slate-200 font-bold">{receiptCustomer?.name || 'Consumidor Geral'}</p>
+                <span className="text-slate-500 block uppercase font-medium text-[9px]">{t('crmClientAcquirer', 'Cliente Adquirente')}</span>
+                <p className="text-slate-200 font-bold">{receiptCustomer?.name || t('crmConsumidorGeral', 'Consumidor Geral')}</p>
                 <p className="text-slate-500">{receiptCustomer?.email || 'N/A'}</p>
               </div>
 
               {/* Product Ledger table */}
               <div className="space-y-2 pb-2 border-b border-slate-800">
                 <div className="flex justify-between text-slate-500 font-medium">
-                  <span>Produto / SKU</span>
+                  <span>{t('crmProductSkuLabel', 'Produto / SKU')}</span>
                   <div className="flex space-x-12">
-                    <span>Qtd</span>
-                    <span>Subtotal</span>
+                    <span>{t('crmQtyLabel', 'Qtd')}</span>
+                    <span>{t('crmSubtotalLabel', 'Subtotal')}</span>
                   </div>
                 </div>
 
@@ -645,18 +645,18 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
               {/* Tax estimation */}
               <div className="space-y-1 text-slate-550 text-[10px]">
                 <div className="flex justify-between">
-                  <span>Impostos Incidentes (NFS-e de Serviços)</span>
-                  <span>Incluso (16.5% - {formatCurrency(activeReceipt.total_amount * 0.165, language)})</span>
+                  <span>{t('crmTaxEstimate', 'Impostos Incidentes (NFS-e de Serviços)')}</span>
+                  <span>{t('crmTaxIncluded', 'Incluso')} (16.5% - {formatCurrency(activeReceipt.total_amount * 0.165, language)})</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Gateway Stripe Processing Fee</span>
-                  <span>Incluso (3.99%)</span>
+                  <span>{t('crmTaxIncluded', 'Incluso')} (3.99%)</span>
                 </div>
               </div>
 
               {/* Big Total */}
               <div className="bg-slate-950/20 p-3 rounded-xl border border-slate-850 flex justify-between items-center text-sm font-bold">
-                <span className="text-white">TOTAL LIQUIDADO:</span>
+                <span className="text-white">{t('crmTotalSettled', 'TOTAL LIQUIDADO')}:</span>
                 <span className="text-emerald-400 text-base">{formatCurrency(activeReceipt.total_amount, language)}</span>
               </div>
             </div>
@@ -671,7 +671,7 @@ export default function CrmSalesView({ onShowNotification }: CrmSalesViewProps) 
                 }}
                 className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-xl transition"
               >
-                Concluir e Fechar
+                {t('crmCloseBtn', 'Concluir e Fechar')}
               </button>
             </div>
           </div>

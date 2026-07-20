@@ -143,7 +143,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           window.location.href = data.checkoutUrl;
         }
       } else {
-        const errorMsg = data?.error || data?.message || (language === 'pt' ? 'Erro ao iniciar o checkout seguro do Stripe.' : 'Error starting secure Stripe checkout.');
+        const errorMsg = data?.error || data?.message || (language.startsWith('pt') ? 'Erro ao iniciar o checkout seguro do Stripe.' : 'Error starting secure Stripe checkout.');
         
         if (isProduction) {
           onShowNotification(
@@ -165,7 +165,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
       if (isProduction) {
         onShowNotification(
           t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
-          language === 'pt' 
+          language.startsWith('pt') 
             ? 'Falha de conexão com o servidor de pagamento. Certifique-se de que a variável STRIPE_SECRET_KEY foi adicionada no Vercel.' 
             : 'Connection failure with the payment server. Verify that STRIPE_SECRET_KEY is configured in Vercel.',
           'warning'
@@ -225,8 +225,8 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
       localStorage.setItem('omnisaas_remembered_email', pendingLoginData.email);
       localStorage.setItem('omnisaas_remembered_password', password);
       onShowNotification(
-        language === 'pt' ? 'Credenciais Salvas' : 'Credentials Saved',
-        language === 'pt' ? 'Suas credenciais foram salvas com sucesso neste navegador para preenchimento automático futuro.' : 'Your credentials have been successfully saved in this browser for future automatic logins.',
+        language.startsWith('pt') ? 'Credenciais Salvas' : 'Credentials Saved',
+        language.startsWith('pt') ? 'Suas credenciais foram salvas com sucesso neste navegador para preenchimento automático futuro.' : 'Your credentials have been successfully saved in this browser for future automatic logins.',
         'success'
       );
     } else {
@@ -259,8 +259,8 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
       if (isMasterEmail) {
         if (!isMasterPassword) {
           onShowNotification(
-            language === 'pt' ? 'Senha Incorreta' : 'Incorrect Password',
-            language === 'pt' ? 'A senha fornecida para a conta master está incorreta.' : 'Incorrect password for the master account.',
+            language.startsWith('pt') ? 'Senha Incorreta' : 'Incorrect Password',
+            language.startsWith('pt') ? 'A senha fornecida para a conta master está incorreta.' : 'Incorrect password for the master account.',
             'warning'
           );
           return;
@@ -273,8 +273,8 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           setIsPaid(false);
           localStorage.removeItem('omnisaas_stripe_paid');
           onShowNotification(
-            language === 'pt' ? 'Pagamento Necessário' : 'Payment Required',
-            language === 'pt' 
+            language.startsWith('pt') ? 'Pagamento Necessário' : 'Payment Required',
+            language.startsWith('pt') 
               ? 'Dados de pagamento não reconhecidos. Por favor, conclua o pagamento seguro do Stripe para acessar o sistema.' 
               : 'Payment details not recognized. Please complete the secure Stripe payment to access the system.',
             'warning'
@@ -313,8 +313,8 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
 
   // Get localized price strings for display
   const getLocalizedPrice = () => {
-    if (language === 'pt') return { currency: 'BRL', value: 'R$ 97,90', code: 'BRL' };
-    if (language === 'es') return { currency: 'EUR', value: '19,99 €', code: 'EUR' };
+    if (language.startsWith('pt')) return { currency: 'BRL', value: 'R$ 97,90', code: 'BRL' };
+    if (language.startsWith('es')) return { currency: 'EUR', value: '19,99 €', code: 'EUR' };
     return { currency: 'USD', value: '$19.99', code: 'USD' };
   };
 
@@ -331,20 +331,20 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
         <Globe className="w-3.5 h-3.5 text-indigo-400" />
         <span className="text-[10px] font-bold text-slate-400 font-mono uppercase mr-1">{t('detectedLocaleIs', 'Idioma Detectado:')}</span>
         <button 
-          onClick={() => setLanguage('pt')} 
-          className={`text-[10px] font-bold px-2 py-0.5 rounded transition ${language === 'pt' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          onClick={() => setLanguage('pt-BR')} 
+          className={`text-[10px] font-bold px-2 py-0.5 rounded transition ${language.startsWith('pt') ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           PT
         </button>
         <button 
           onClick={() => setLanguage('es')} 
-          className={`text-[10px] font-bold px-2 py-0.5 rounded transition ${language === 'es' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          className={`text-[10px] font-bold px-2 py-0.5 rounded transition ${language.startsWith('es') ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           ES
         </button>
         <button 
-          onClick={() => setLanguage('en')} 
-          className={`text-[10px] font-bold px-2 py-0.5 rounded transition ${language === 'en' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          onClick={() => setLanguage('en-US')} 
+          className={`text-[10px] font-bold px-2 py-0.5 rounded transition ${language.startsWith('en') ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
         >
           EN
         </button>
@@ -388,15 +388,15 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
               <div className="text-left space-y-2 text-[11px] text-slate-300 px-1 pt-2">
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Omni ERP Suite</strong>: {language === 'pt' ? 'Hábitos, Metas, Finanças e Contratos' : 'Habits, Goals, Finances & Teams'}</span>
+                  <span><strong>Omni ERP Suite</strong>: {language.startsWith('pt') ? 'Hábitos, Metas, Finanças e Contratos' : 'Habits, Goals, Finances & Teams'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Vesta AI Copilot</strong>: {language === 'pt' ? 'Relatórios Inteligentes Automatizados' : 'Automated Business Intelligence'}</span>
+                  <span><strong>Vesta AI Copilot</strong>: {language.startsWith('pt') ? 'Relatórios Inteligentes Automatizados' : 'Automated Business Intelligence'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Supabase Cloud Sync</strong>: {language === 'pt' ? 'Salvamento de segurança RLS integrado' : 'Bidirectional secure RLS saving'}</span>
+                  <span><strong>Supabase Cloud Sync</strong>: {language.startsWith('pt') ? 'Salvamento de segurança RLS integrado' : 'Bidirectional secure RLS saving'}</span>
                 </div>
               </div>
             </div>
@@ -428,14 +428,14 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                     setIsPaid(true);
                     localStorage.setItem('omnisaas_stripe_paid', 'true');
                     onShowNotification(
-                      language === 'pt' ? 'Licença Ativada' : 'License Activated',
-                      language === 'pt' ? 'Bem-vindo de volta! Acesse sua conta agora.' : 'Welcome back! You can access your account now.',
+                      language.startsWith('pt') ? 'Licença Ativada' : 'License Activated',
+                      language.startsWith('pt') ? 'Bem-vindo de volta! Acesse sua conta agora.' : 'Welcome back! You can access your account now.',
                       'success'
                     );
                   }}
                   className="w-full bg-slate-950 hover:bg-slate-900 text-indigo-400 hover:text-indigo-350 font-bold text-xs py-2.5 rounded-xl transition border border-slate-800"
                 >
-                  {language === 'pt' ? 'Já efetuei o pagamento / Entrar direto' : 'Already paid? Login directly'}
+                  {language.startsWith('pt') ? 'Já efetuei o pagamento / Entrar direto' : 'Already paid? Login directly'}
                 </button>
               </div>
             ) : (
@@ -792,7 +792,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                   onLogin('kaluvih@gmail.com', 'google', 'Kalu Vih');
                   onShowNotification(
                     'Google OAuth Connected', 
-                    language === 'pt' ? 'Autenticado com sucesso via Google (kaluvih@gmail.com)!' : 'Successfully authenticated via Google (kaluvih@gmail.com)!', 
+                    language.startsWith('pt') ? 'Autenticado com sucesso via Google (kaluvih@gmail.com)!' : 'Successfully authenticated via Google (kaluvih@gmail.com)!', 
                     'success'
                   );
                 } else {
@@ -802,8 +802,8 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                     setIsPaid(false);
                     localStorage.removeItem('omnisaas_stripe_paid');
                     onShowNotification(
-                      language === 'pt' ? 'Acesso Negado' : 'Access Denied',
-                      language === 'pt' 
+                      language.startsWith('pt') ? 'Acesso Negado' : 'Access Denied',
+                      language.startsWith('pt') 
                         ? 'Este e-mail do Google não possui licença ativa do Stripe. Efetue o pagamento.' 
                         : 'This Google email does not have an active Stripe license. Please make a payment.',
                       'warning'
@@ -819,7 +819,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
             >
               <div className="space-y-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {language === 'pt' ? 'Seu E-mail do Google' : 'Your Google Email Address'}
+                  {language.startsWith('pt') ? 'Seu E-mail do Google' : 'Your Google Email Address'}
                 </label>
                 <input
                   type="email"
@@ -827,7 +827,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                   placeholder="user@gmail.com"
                   value={googleCustomEmail}
                   onChange={(e) => setGoogleCustomEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none"
+                  className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-650 focus:outline-none"
                 />
               </div>
 
@@ -837,13 +837,13 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                   onClick={() => setShowGoogleModal(false)}
                   className="flex-1 py-2 bg-slate-950 hover:bg-slate-850 rounded-xl text-[10px] text-slate-450 font-bold border border-slate-800 transition"
                 >
-                  {language === 'pt' ? 'Cancelar' : 'Cancel'}
+                  {language.startsWith('pt') ? 'Cancelar' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-bold transition"
                 >
-                  {language === 'pt' ? 'Avançar' : 'Next'}
+                  {language.startsWith('pt') ? 'Avançar' : 'Next'}
                 </button>
               </div>
             </form>
@@ -865,12 +865,12 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <h3 className="text-sm font-extrabold text-slate-100">
-                {language === 'pt' ? 'Salvar Credenciais?' : 'Save Credentials?'}
+                {language.startsWith('pt') ? 'Salvar Credenciais?' : 'Save Credentials?'}
               </h3>
             </div>
             
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              {language === 'pt' 
+              {language.startsWith('pt') 
                 ? 'Deseja salvar seu e-mail e senha de forma segura neste navegador para preenchimento automático futuro?' 
                 : 'Would you like to securely save your email and password in this browser for future automatic logins?'}
             </p>
@@ -881,7 +881,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                 <span className="text-slate-300 truncate max-w-[180px]">{pendingLoginData?.email}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{language === 'pt' ? 'Senha' : 'Password'}:</span>
+                <span className="text-slate-500">{language.startsWith('pt') ? 'Senha' : 'Password'}:</span>
                 <span className="text-slate-300">••••••••</span>
               </div>
             </div>
@@ -892,14 +892,14 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                 onClick={() => handleSaveAndLogin(false)}
                 className="py-2.5 bg-slate-950 hover:bg-slate-850 rounded-xl text-[11px] text-slate-450 font-bold border border-slate-800 transition uppercase tracking-wider cursor-pointer text-center"
               >
-                {language === 'pt' ? 'Agora Não' : 'Not Now'}
+                {language.startsWith('pt') ? 'Agora Não' : 'Not Now'}
               </button>
               <button
                 type="button"
                 onClick={() => handleSaveAndLogin(true)}
                 className="py-2.5 bg-indigo-600 hover:bg-indigo-550 text-white rounded-xl text-[11px] font-bold transition uppercase tracking-wider cursor-pointer text-center"
               >
-                {language === 'pt' ? 'Sim, Salvar' : 'Yes, Save'}
+                {language.startsWith('pt') ? 'Sim, Salvar' : 'Yes, Save'}
               </button>
             </div>
           </div>
