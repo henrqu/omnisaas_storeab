@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import OmniSaaSLogo from './OmniSaaSLogo';
-import { useLanguageTheme } from '../utils/i18n';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -9,12 +8,10 @@ interface SplashScreenProps {
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
-  const { theme, t } = useLanguageTheme();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Fill the progress bar smoothly over exactly 2.7 seconds (2700ms)
-    // so it reaches 100% just before the 3.0 second (3000ms) fadeout starts
+    // Fill progress bar smoothly over 2.7s so it finishes at 100% at 3s
     const duration = 2700;
     const intervalTime = 15;
     const steps = duration / intervalTime;
@@ -30,7 +27,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       });
     }, intervalTime);
 
-    // Call onComplete after exactly 3.0 seconds (3000ms)
+    // Auto complete after exactly 3.0 seconds (3000ms) without needing any click
     const timeout = setTimeout(() => {
       onComplete();
     }, 3000);
@@ -41,118 +38,82 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     };
   }, [onComplete]);
 
-  const isDark = theme === 'dark';
-
   return (
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.5, ease: 'easeInOut' } }}
-      onClick={onComplete}
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden transition-colors duration-500 cursor-pointer ${
-        isDark ? 'bg-[#030712] text-slate-100' : 'bg-[#fafafa] text-slate-900'
-      }`}
-      id="omnisaas-splash-screen"
-      title={t('clickToSkip', 'Clique para pular')}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-slate-950 text-slate-100 select-none"
+      id="life4billion-splash-screen"
     >
-      {/* Background ambient glowing spheres */}
+      {/* Background ambient glowing spheres matching SaaS color palette */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: isDark ? 0.4 : 0.2, scale: 1 }}
+          animate={{ opacity: 0.35, scale: 1 }}
           transition={{ duration: 1.5, ease: 'easeOut' }}
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none ${
-            isDark 
-              ? 'bg-gradient-to-tr from-[#1E73BE]/20 to-purple-500/10' 
-              : 'bg-gradient-to-tr from-[#1E73BE]/10 to-indigo-500/5'
-          }`}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-emerald-500/10 blur-[130px] pointer-events-none"
         />
       </div>
 
       <div className="relative z-10 flex flex-col items-center text-center max-w-md px-6">
-        {/* Animated Logo Container with tech glow ring */}
-        <div className="relative mb-10 flex items-center justify-center">
-          {/* Subtle technological pulsing glow ring */}
+        {/* Animated Logo Container */}
+        <div className="relative mb-8 flex items-center justify-center">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ 
               scale: [1, 1.15, 1], 
-              opacity: isDark ? [0.15, 0.35, 0.15] : [0.08, 0.2, 0.08] 
+              opacity: [0.15, 0.35, 0.15] 
             }}
             transition={{ 
               duration: 2.2, 
               ease: 'easeInOut',
               repeat: Infinity 
             }}
-            className="absolute w-44 h-44 rounded-full border border-[#1E73BE]/30 blur-sm pointer-events-none"
+            className="absolute w-44 h-44 rounded-full border border-indigo-500/30 blur-sm pointer-events-none"
           />
           
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: [1, 1.25, 1], opacity: isDark ? [0.05, 0.15, 0.05] : [0.03, 0.1, 0.03] }}
-            transition={{ duration: 3.5, ease: 'easeInOut', repeat: Infinity }}
-            className="absolute w-64 h-64 rounded-full bg-[#1E73BE] blur-2xl pointer-events-none"
-          />
-
-          {/* Premium Logo element */}
           <motion.div
             initial={{ opacity: 0, y: -15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <OmniSaaSLogo size="lg" />
+            <OmniSaaSLogo size="xl" />
           </motion.div>
         </div>
 
-        {/* Brand Welcome Text */}
+        {/* Welcome Heading in American English */}
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
-          className={`text-2xl sm:text-3xl font-extrabold tracking-tight mb-3 ${
-            isDark ? 'text-white' : 'text-slate-900'
-          }`}
+          className="text-2xl sm:text-3xl font-black tracking-tight mb-3 text-white"
         >
-          {t('welcomeToOmni', 'Bem-vindo ao OMNISAAS')}
+          Welcome to Life4Billion
         </motion.h1>
 
-        {/* Subtext description */}
+        {/* Subtext description in American English */}
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.5, ease: 'easeOut' }}
-          className={`text-sm leading-relaxed max-w-xs sm:max-w-sm mb-8 font-medium ${
-            isDark ? 'text-slate-400' : 'text-slate-600'
-          }`}
+          className="text-sm leading-relaxed max-w-xs sm:max-w-sm mb-8 font-medium text-slate-400"
         >
-          {t('splashSubtext', 'O sistema inteligente para gerir o seu negócio e produtividade.')}
+          One App. One Life. Unlimited Growth. The intelligent workspace for money, health, productivity, and business.
         </motion.p>
 
-        {/* Discrete premium loading indicator */}
-        <div className="w-48 h-[3px] rounded-full overflow-hidden relative bg-slate-200 dark:bg-slate-800/80">
+        {/* 3-Second Processor Loading Bar */}
+        <div className="w-56 h-1.5 rounded-full overflow-hidden relative bg-slate-900 border border-slate-800">
           <motion.div 
-            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"
-            style={{ width: `${progress}%` }}
-            transition={{ ease: 'easeOut' }}
+            className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 rounded-full shadow-[0_0_12px_rgba(99,102,241,0.6)]"
+            style={{ width: `${Math.min(100, Math.round(progress))}%` }}
+            transition={{ ease: 'linear' }}
           />
         </div>
         
-        <motion.span 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-          className="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-2 font-mono"
-        >
-          {t('loadingEngine', 'Iniciando Sistema...')}
-        </motion.span>
-
-        <motion.span 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
-          transition={{ delay: 1.0, duration: 0.4 }}
-          className="text-[10px] text-slate-450 dark:text-slate-500 mt-6 underline cursor-pointer hover:opacity-100 transition-opacity"
-        >
-          {t('clickToSkipHint', 'Clique em qualquer lugar para pular ➔')}
-        </motion.span>
+        <div className="flex items-center justify-between w-56 mt-2.5 text-[11px] font-mono text-slate-400">
+          <span className="uppercase tracking-wider">Loading System...</span>
+          <span className="font-bold text-indigo-400">{Math.min(100, Math.round(progress))}%</span>
+        </div>
       </div>
     </motion.div>
   );

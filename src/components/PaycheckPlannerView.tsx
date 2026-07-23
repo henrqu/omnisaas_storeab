@@ -25,7 +25,9 @@ import {
   Users,
   ShoppingCart,
   Printer,
-  Download
+  Download,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { useLanguageTheme, formatCurrency } from '../utils/i18n';
 
@@ -306,6 +308,26 @@ export default function PaycheckPlannerView() {
   const [aiChatResponses, setAiChatResponses] = useState<string[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  // Spreadsheet section visibility state (sheets hidden/expanded when clicked)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const expandAllSections = () => {
+    const all: Record<string, boolean> = {};
+    sections.forEach(s => { all[s.id] = true; });
+    setExpandedSections(all);
+  };
+
+  const collapseAllSections = () => {
+    setExpandedSections({});
+  };
+
   // Totals calculations
   const getSectionTotal = (sectionId: string, type: 'budgeted' | 'actual') => {
     const section = sections.find(s => s.id === sectionId);
@@ -471,10 +493,10 @@ export default function PaycheckPlannerView() {
         body: JSON.stringify({
           prompt: promptText,
           systemInstruction: language.startsWith('pt')
-            ? "Você é o Planejador Vesta AI. Faça análises curtas, extremamente estratégicas e encorajadoras sobre a distribuição de salários de seus usuários."
+            ? "Você é o Planejador Life4Billion AI. Faça análises curtas, extremamente estratégicas e encorajadoras sobre a distribuição de salários de seus usuários."
             : language.startsWith('es')
-            ? "Eres el Planificador Vesta AI. Realiza análisis cortos, extremadamente estratégicos y alentadores sobre la distribución salarial de tus usuarios."
-            : "You are the Vesta AI Planner. Make short, highly strategic, and encouraging analyses of your users' salary distribution."
+            ? "Eres el Planificador Life4Billion AI. Realiza análisis cortos, extremadamente estratégicos y alentadores sobre la distribución salarial de tus usuarios."
+            : "You are the Life4Billion AI Planner. Make short, highly strategic, and encouraging analyses of your users' salary distribution."
         })
       });
 
@@ -504,8 +526,8 @@ export default function PaycheckPlannerView() {
         fun: suggestedFun,
         remaining: remaining,
         tips: language === 'pt' 
-          ? `[Vesta AI Redundante] Sua pontuação de saúde financeira é de ${financialHealthScore}/100. Recomendamos alocar ${formatCurrency(suggestedSavings, language)} para poupança emergencial, mantendo os custos de moradia abaixo de 30% do seu salário total.`
-          : `[Vesta AI Redundant] Your financial health score is ${financialHealthScore}/100. We recommend allocating ${formatCurrency(suggestedSavings, language)} for emergency savings, keeping housing expenses below 30% of your total paycheck.`
+          ? `[Life4Billion AI Redundante] Sua pontuação de saúde financeira é de ${financialHealthScore}/100. Recomendamos alocar ${formatCurrency(suggestedSavings, language)} para poupança emergencial, mantendo os custos de moradia abaixo de 30% do seu salário total.`
+          : `[Life4Billion AI Redundant] Your financial health score is ${financialHealthScore}/100. We recommend allocating ${formatCurrency(suggestedSavings, language)} for emergency savings, keeping housing expenses below 30% of your total paycheck.`
       });
     } finally {
       setIsAiLoading(false);
@@ -965,6 +987,52 @@ export default function PaycheckPlannerView() {
           </div>
         </div>
 
+        {/* SHEET ACCORDION FILTER TABS (Click to show/hide individual sheets) */}
+        <div className="px-4 py-3 bg-slate-900/30 border-b border-slate-800 flex flex-wrap items-center gap-2 text-xs no-print">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mr-1">
+            {language === 'pt' ? 'Folhas do Orçamento:' : 'Budget Sheets:'}
+          </span>
+          {sections.map((section) => {
+            const isExpanded = !!expandedSections[section.id];
+            const sectionName = language === 'pt' ? section.titlePt : section.title;
+            return (
+              <button
+                key={section.id}
+                onClick={() => toggleSection(section.id)}
+                className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition cursor-pointer flex items-center space-x-1.5 ${
+                  isExpanded 
+                    ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40 font-bold shadow-sm' 
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
+                }`}
+              >
+                {getSectionIcon(section.id)}
+                <span>{sectionName.split('.')[1] || sectionName}</span>
+                {isExpanded ? (
+                  <ChevronDown className="w-3 h-3 text-indigo-400" />
+                ) : (
+                  <ChevronRight className="w-3 h-3 text-slate-500" />
+                )}
+              </button>
+            );
+          })}
+
+          <div className="ml-auto flex items-center space-x-2">
+            <button
+              onClick={expandAllSections}
+              className="text-[11px] text-slate-400 hover:text-emerald-400 font-mono transition cursor-pointer underline decoration-dotted"
+            >
+              {language === 'pt' ? 'Expandir Todas' : 'Expand All'}
+            </button>
+            <span className="text-slate-700">|</span>
+            <button
+              onClick={collapseAllSections}
+              className="text-[11px] text-slate-400 hover:text-rose-400 font-mono transition cursor-pointer underline decoration-dotted"
+            >
+              {language === 'pt' ? 'Ocultar Todas' : 'Collapse All'}
+            </button>
+          </div>
+        </div>
+
         {/* ACTIVE MAIN GRID - SECTIONS (INCOME, ESSENTIALS, DEBT PAYMENTS, SAVINGS SUMMARY, FINANCIAL PRIORITIES, SINKING FUNDS, ETC) */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -981,31 +1049,52 @@ export default function PaycheckPlannerView() {
                 const secBudget = getSectionTotal(section.id, 'budgeted');
                 const secActual = getSectionTotal(section.id, 'actual');
                 const isIncomeSec = section.id === 'income';
+                const isExpanded = !!expandedSections[section.id];
                 
                 return (
                   <React.Fragment key={section.id}>
-                    {/* Section Header Row */}
-                    <tr className="bg-slate-900/30 font-bold border-b border-slate-800">
-                      <td className="py-2.5 px-4 text-white uppercase font-black text-[11px] tracking-wider flex items-center gap-2">
-                        {getSectionIcon(section.id)}
-                        <span>{language === 'pt' ? section.titlePt : section.title}</span>
+                    {/* Section Header Row (Clickable to toggle collapse/expand) */}
+                    <tr 
+                      onClick={() => toggleSection(section.id)}
+                      className="bg-slate-900/40 hover:bg-slate-900/70 cursor-pointer font-bold border-b border-slate-800/80 transition group"
+                      title={language === 'pt' ? 'Clique para expandir/ocultar esta folha' : 'Click to expand/collapse this sheet'}
+                    >
+                      <td className="py-2.5 px-4 text-white uppercase font-black text-[11px] tracking-wider flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-indigo-400 transition-transform" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-transform" />
+                          )}
+                          {getSectionIcon(section.id)}
+                          <span>{language === 'pt' ? section.titlePt : section.title}</span>
+                        </div>
+                        {!isExpanded && (
+                          <span className="text-[10px] font-mono text-slate-500 font-normal border border-slate-800 px-2 py-0.5 rounded-md bg-slate-950/60">
+                            {section.items.length} {language === 'pt' ? 'itens (clique p/ abrir)' : 'items (click to open)'}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-white text-[11px]">
+                      <td className="py-2.5 px-4 text-right font-mono text-indigo-300 font-extrabold text-[11px]">
                         ${secBudget.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono text-white text-[11px]">
+                      <td className="py-2.5 px-4 text-right font-mono text-white font-extrabold text-[11px]">
                         ${secActual.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-2.5 px-4"></td>
+                      <td className="py-2.5 px-4 text-center">
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {isExpanded ? '▼' : '►'}
+                        </span>
+                      </td>
                     </tr>
 
-                    {/* Section Items Rows */}
-                    {section.items.map((item) => {
+                    {/* Section Items Rows (Hidden when collapsed, visible when expanded) */}
+                    {isExpanded && section.items.map((item) => {
                       const isExcessActual = !isIncomeSec && item.actual > item.budgeted;
                       
                       return (
-                        <tr key={item.id} className="hover:bg-slate-900/10 border-b border-slate-900/10">
-                          <td className="py-1.5 px-6 text-slate-350 font-sans pl-8">
+                        <tr key={item.id} className="hover:bg-slate-900/20 border-b border-slate-900/10 transition">
+                          <td className="py-1.5 px-6 text-slate-300 font-sans pl-10">
                             • {item.name}
                           </td>
                           <td className="py-1 px-4 text-right">
@@ -1033,7 +1122,7 @@ export default function PaycheckPlannerView() {
                               ) : null
                             ) : (
                               isExcessActual ? (
-                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 mx-auto" title="Estourou o planejado" />
+                                <span title="Estourou o planejado"><AlertTriangle className="w-3.5 h-3.5 text-rose-500 mx-auto" /></span>
                               ) : item.actual > 0 ? (
                                 <CheckCircle className="w-3.5 h-3.5 text-emerald-500 mx-auto" />
                               ) : null

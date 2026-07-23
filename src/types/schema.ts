@@ -20,6 +20,7 @@ export interface Profile {
   avatar_url: string;
   role: 'admin' | 'owner' | 'member' | 'guest';
   phone?: string;
+  email?: string;
 }
 
 export interface Subscription {
@@ -229,6 +230,7 @@ export interface Notification {
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'error';
   created_at: string;
+  date?: string;
 }
 
 export interface EBook {
@@ -247,3 +249,60 @@ export interface EBook {
   clicks_count?: number;
   recommendations_count?: number;
 }
+
+export type DashboardType = 'executive' | 'financial_health' | 'bi' | 'minimal' | 'ai_smart';
+
+export interface EmergencyFund {
+  id: string;
+  user_id: string;
+  target_amount: number;
+  current_balance: number;
+  deadline: string;
+  purpose: 'medical' | 'job_loss' | 'family' | 'unexpected' | 'custom';
+  custom_purpose?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface Debt {
+  id: string;
+  user_id: string;
+  creditor: string;
+  total_amount: number;
+  paid_amount: number;
+  interest_rate: number; // annual %
+  minimum_payment: number;
+  due_date: string;
+  category: 'credit_card' | 'personal_loan' | 'mortgage' | 'student_loan' | 'other';
+  status: 'active' | 'paid';
+}
+
+export interface FinancialCard {
+  id: string;
+  user_id: string;
+  name: string;
+  bank: string;
+  type: 'credit' | 'debit';
+  brand?: 'visa' | 'master_black' | 'master_gold' | 'other';
+  limit_amount: number;
+  current_balance: number;
+  available_credit: number;
+  payment_due_date: string;
+  interest_rate: number;
+  is_frozen: boolean;
+  last_4: string;
+  cardholder_name?: string;
+  expiry_date?: string;
+  color?: string;
+}
+
+export interface PaidDebtLog {
+  id: string;
+  user_id: string;
+  creditor: string;
+  total_paid: number;
+  date_completed: string;
+  interest_saved: number;
+  category: string;
+}
+

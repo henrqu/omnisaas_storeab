@@ -128,10 +128,10 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
           prompt: cleanText,
           language: language,
           systemInstruction: language.startsWith('pt') 
-            ? "Você é o Copiloto Vesta AI, o cérebro analítico do OmniSaaS ERP. Analise os dados providos com rigor científico, clareza executiva e dê recomendações financeiras, operacionais ou médicas concisas em português brasileiro."
+            ? "Você é o Life4Billion AI, o cérebro analítico da plataforma Life4Billion. Analise os dados providos com rigor científico, clareza executiva e dê recomendações financeiras, operacionais ou médicas concisas em português brasileiro."
             : language.startsWith('es')
-            ? "Eres el Copiloto Vesta AI, el cerebro analítico de OmniSaaS ERP. Analiza los datos proporcionados con rigor científico, claridad ejecutiva y brinda recomendaciones financieras, operativas o médicas concisas en español."
-            : "You are the Vesta AI Copilot, the analytical brain of the OmniSaaS ERP. Analyze the provided data with scientific rigor, executive clarity, and give concise financial, operational, or medical recommendations in English."
+            ? "Eres el Life4Billion AI, el cerebro analítico de la plataforma Life4Billion. Analiza los datos proporcionados con rigor científico, claridad ejecutiva y brinda recomendaciones financieras, operativas o médicas concisas en español."
+            : "You are the Life4Billion AI, the analytical brain of the Life4Billion workspace. Analyze the provided data with scientific rigor, executive clarity, and give concise financial, operational, or medical recommendations in English."
         })
       });
 
@@ -154,7 +154,7 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
         setHistory(LocalDatabase.getAiHistory());
         setPrompt('');
         onShowNotification(
-          'OmniSaaS Copilot ✨', 
+          'Life4Billion AI ✨', 
           language.startsWith('pt') 
             ? 'Nova análise preditiva gerada pela inteligência artificial!' 
             : language.startsWith('es')
@@ -174,32 +174,32 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
 
       if (language.startsWith('pt')) {
         if (lowerPrompt.includes("receita") || lowerPrompt.includes("financeiro") || lowerPrompt.includes("julho") || lowerPrompt.includes("orçamento") || lowerPrompt.includes("caixa")) {
-          simulatedResponse = "### Relatório de Saúde Financeira OmniSaaS (Vesta AI)\n\n" +
+          simulatedResponse = "### Relatório de Saúde Financeira Life4Billion (Life4Billion AI)\n\n" +
             "• **Faturamento Bruto**: R$ 17.700,00\n" +
             "• **Gastos Operacionais**: R$ 1.880,00\n" +
             "• **Lucro Líquido Estimado**: R$ 15.820,00 (Margem Operacional de **89.3%**)\n\n" +
             "**Análise de Alocação de Recursos**:\n" +
-            "Sua maior despesa recorrente está em *Infraestrutura Cloud / SaaS (AWS/Supabase)*, correspondendo a **77.1%** do seu passivo mensal total. \n\n" +
+            "Sua maior despesa recorrente está em *Infraestrutura Cloud (AWS/Supabase)*, correspondendo a **77.1%** do seu passivo mensal total. \n\n" +
             "**Recomendações Estratégicas**:\n" +
             "1. **Fundo Tributário**: Recomenda-se provisionar **12%** de cada entrada de faturamento em conta dedicada para cobrir o imposto trimestral (DAS/Simples Nacional).\n" +
             "2. **Otimização Cloud**: Considere solicitar o pacote de créditos de startups ou migrar para instâncias reservadas de 1 ano para reduzir custos de infraestrutura em até **32%**.";
         } else if (lowerPrompt.includes("estoque") || lowerPrompt.includes("produto") || lowerPrompt.includes("sku") || lowerPrompt.includes("venda")) {
-          simulatedResponse = "### Auditoria de Estoque e Catálogo de Produtos (Vesta AI)\n\n" +
+          simulatedResponse = "### Auditoria de Estoque e Catálogo de Produtos (Life4Billion AI)\n\n" +
             "• **Status Geral**: Regular (1 SKU em ponto de reabastecimento crítico).\n" +
-            "• **Alerta Vermelho**: O produto `'Mentoria Executiva All-in-One'` (SKU: `OS-MENTOR-HQ`) possui apenas **8 unidades** virtuais livres na agenda atual (mínimo de segurança: 10).\n\n" +
+            "• **Alerta Vermelho**: O produto `'Mentoria Executiva All-in-One'` (SKU: `L4B-MENTOR-HQ`) possui apenas **8 unidades** virtuais livres na agenda atual (mínimo de segurança: 10).\n\n" +
             "**Análise de Risco**: Risco moderado de quebra de estoque intangível caso uma campanha ativa de marketing seja veiculada nas próximas 48 horas.\n\n" +
             "**Ações Imediatas Sugeridas**:\n" +
             "1. Aumentar os limites de slots ou liberar novas datas na agenda do ERP.\n" +
-            "2. O SKU `'Licença Mensal OmniSaaS Pro'` (Digital) opera com estoque automatizado infinito e responde por **82%** do seu fluxo recorrente.";
+            "2. O SKU `'Licença Mensal Life4Billion Pro'` (Digital) opera com estoque automatizado infinito e responde por **82%** do seu fluxo recorrente.";
         } else if (lowerPrompt.includes("funcionário") || lowerPrompt.includes("salário") || lowerPrompt.includes("folha") || lowerPrompt.includes("clt") || lowerPrompt.includes("trabalhista")) {
-          simulatedResponse = "### Auditoria de RH e Custos Trabalhistas (Vesta AI)\n\n" +
+          simulatedResponse = "### Auditoria de RH e Custos Trabalhistas (Life4Billion AI)\n\n" +
             "• **Colaboradores Ativos**: 3 contratados CLT/PJ.\n" +
-            "• **Custo Nominal Mensal (Folha)**: R$ 31.500,00\n" +
+            "• **Custo Nominal Mensual (Folha)**: R$ 31.500,00\n" +
             "• **Status de Processamento**: Competência atual processada para 2 colaboradores; 1 colaborador (Designer UI/UX) aguardando liberação manual de benefícios.\n\n" +
             "**Diretrizes Legais Importantes (Brasil)**:\n" +
             "• Lembre-se de efetuar o recolhimento do FGTS e da guia do INSS patronal de *Bruno Almeida* até o dia 20 do mês corrente para evitar multas moratórias de **2% ao mês**.";
         } else if (lowerPrompt.includes("hábito") || lowerPrompt.includes("saúde") || lowerPrompt.includes("gestação") || lowerPrompt.includes("gravidez") || lowerPrompt.includes("dieta")) {
-          simulatedResponse = "### Diagnóstico Médico e Monitoramento Nutricional (Vesta AI)\n\n" +
+          simulatedResponse = "### Diagnóstico Médico e Monitoramento Nutricional (Life4Billion AI)\n\n" +
             "• **Métrica Principal**: Excelente engajamento de hidratação (streak ativo de 4 dias consumindo 3L/dia).\n" +
             "• **Estágio Gravídico**: Seu registro indica **14 semanas de gestação** (o bebê tem o tamanho aproximado de um limão, ~8.5 cm de comprimento).\n\n" +
             "**Recomendações e Sintomas Previstos**:\n" +
@@ -207,39 +207,39 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
             "2. **Nutrição**: Mantenha refeições fracionadas ao longo do dia, ricas em carboidratos complexos, ácido fólico e ferro.\n" +
             "3. Evite longos períodos de jejum para combater episódios de hipoglicemia gestacional.";
         } else {
-          simulatedResponse = `### Relatório Estratégico OmniSaaS\n\n` +
+          simulatedResponse = `### Relatório Estratégico Life4Billion\n\n` +
             `Sua pergunta: *"${cleanText}"*\n\n` +
-            `O OmniSaaS processou sua solicitação utilizando o **Motor de Simulação Local Integrado** para garantir total funcionamento sem dependências externas.\n\n` +
+            `O Life4Billion processou sua solicitação utilizando o **Motor de Simulação Local Integrado** para garantir total funcionamento sem dependências externas.\n\n` +
             `**Recomendação Técnica**: Para ativar inteligência em tempo real avançada baseada em dados reais via OpenAI GPT-4o ou Gemini, certifique-se de configurar suas chaves de API secretas (OpenAI ou Gemini) no painel de segredos (Secrets) do seu console e reinicie o servidor de desenvolvimento.`;
         }
       } else if (language.startsWith('es')) {
         if (lowerPrompt.includes("receita") || lowerPrompt.includes("financeiro") || lowerPrompt.includes("julho") || lowerPrompt.includes("ingresos") || lowerPrompt.includes("presupuesto") || lowerPrompt.includes("caja")) {
-          simulatedResponse = "### Informe de Salud Financiera OmniSaaS (Vesta AI)\n\n" +
+          simulatedResponse = "### Informe de Salud Financiera Life4Billion (Life4Billion AI)\n\n" +
             "• **Ingresos Brutos**: $17.700,00\n" +
             "• **Gastos Operativos**: $1.880,00\n" +
             "• **Beneficio Neto Estimado**: $15.820,00 (Margen Operativo del **89,3%**)\n\n" +
             "**Análisis de Asignación de Recursos**:\n" +
-            "Su mayor gasto recurrente se encuentra en *Infraestructura Cloud / SaaS (AWS/Supabase)*, lo que corresponde al **77,1%** de sus pasivos mensuales totales. \n\n" +
+            "Su mayor gasto recurrente se encuentra en *Infraestructura Cloud (AWS/Supabase)*, lo que corresponde al **77,1%** de sus pasivos mensuales totales. \n\n" +
             "**Recomendaciones Estratégicas**:\n" +
             "1. **Provisión de Impuestos**: Se recomienda aprovisionar el **12%** de cada ingreso en una cuenta dedicada para cubrir los impuestos corporativos trimestrales.\n" +
             "2. **Optimización Cloud**: Considere solicitar un paquete de créditos para startups o migrar a instancias reservadas de 1 año para reducir los costos de infraestructura hasta en un **32%**.";
         } else if (lowerPrompt.includes("estoque") || lowerPrompt.includes("produto") || lowerPrompt.includes("sku") || lowerPrompt.includes("venda") || lowerPrompt.includes("inventario") || lowerPrompt.includes("stock") || lowerPrompt.includes("producto")) {
-          simulatedResponse = "### Auditoría de Inventario y Catálogo de Productos (Vesta AI)\n\n" +
+          simulatedResponse = "### Auditoría de Inventario y Catálogo de Productos (Life4Billion AI)\n\n" +
             "• **Estado General**: Regular (1 SKU en punto crítico de reposición).\n" +
-            "• **Alerta Roja**: El producto `'Mentoría Ejecutiva All-in-One'` (SKU: `OS-MENTOR-HQ`) tiene solo **8 unidades** virtuales libres en la agenda actual (mínimo de seguridad: 10).\n\n" +
+            "• **Alerta Roja**: El producto `'Mentoría Ejecutiva All-in-One'` (SKU: `L4B-MENTOR-HQ`) tiene solo **8 unidades** virtuales libres en la agenda actual (mínimo de seguridad: 10).\n\n" +
             "**Análisis de Riesgo**: Riesgo moderado de desabastecimiento intangible si se lanza una campaña de marketing activa en las próximas 48 horas.\n\n" +
             "**Acciones Inmediatas Sugeridas**:\n" +
             "1. Aumentar los límites de cupos o liberar nuevas fechas en la agenda del ERP.\n" +
-            "2. El SKU `'Licença Mensal OmniSaaS Pro'` (Digital) opera con inventario automatizado infinito y representa el **82%** de su flujo recurrente.";
+            "2. El SKU `'Licença Mensal Life4Billion Pro'` (Digital) opera con inventario automatizado infinito y representa el **82%** de su flujo recurrente.";
         } else if (lowerPrompt.includes("funcionário") || lowerPrompt.includes("salário") || lowerPrompt.includes("folha") || lowerPrompt.includes("clt") || lowerPrompt.includes("trabalhista") || lowerPrompt.includes("empleado") || lowerPrompt.includes("nómina") || lowerPrompt.includes("salario") || lowerPrompt.includes("trabajo")) {
-          simulatedResponse = "### Auditoría de Recursos Humanos y Costos de Nómina (Vesta AI)\n\n" +
+          simulatedResponse = "### Auditoría de Recursos Humanos y Costos de Nómina (Life4Billion AI)\n\n" +
             "• **Colaboradores Activos**: 3 contratados.\n" +
             "• **Costo Nominal Mensual (Nómina)**: $31.500,00\n" +
             "• **Estado de Procesamiento**: Nómina actual procesada para 2 colaboradores; 1 colaborador (Diseñador UI/UX) en espera de aprobación manual de beneficios.\n\n" +
             "**Directrices Legales Importantes**:\n" +
             "• Asegúrese de realizar la declaración de impuestos sobre la nómina y las contribuciones patronales antes de la fecha de vencimiento para evitar recargos por mora del **2% mensual**.";
         } else if (lowerPrompt.includes("hábito") || lowerPrompt.includes("saúde") || lowerPrompt.includes("gestação") || lowerPrompt.includes("gravidez") || lowerPrompt.includes("dieta") || lowerPrompt.includes("embarazo") || lowerPrompt.includes("gestación")) {
-          simulatedResponse = "### Diagnóstico Médico y Monitoreo Nutricional (Vesta AI)\n\n" +
+          simulatedResponse = "### Diagnóstico Médico y Monitoreo Nutricional (Life4Billion AI)\n\n" +
             "• **Métrica Principal**: Excelente nivel de hidratación (racha activa de 4 días consumiendo 3L/día).\n" +
             "• **Etapa de Embarazo**: Su registro indica **14 semanas de gestación** (el bebé tiene el tamaño aproximado de un limón, ~8,5 cm de longitud).\n\n" +
             "**Recomendaciones y Síntomas Previstos**:\n" +
@@ -247,39 +247,39 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
             "2. **Nutrición**: Mantenga comidas fraccionadas a lo largo del día, ricas en carbohidratos complejos, ácido fólico e hierro.\n" +
             "3. Evite períodos prolongados de ayuno para combatir episodios de hipoglicemia gestacional.";
         } else {
-          simulatedResponse = `### Informe Estratégico OmniSaaS\n\n` +
+          simulatedResponse = `### Informe Estratégico Life4Billion\n\n` +
             `Su pregunta: *"${cleanText}"*\n\n` +
-            `OmniSaaS procesó su solicitud utilizando el **Motor de Simulación Local Integrado** para garantizar el funcionamiento completo sin dependencias externas.\n\n` +
+            `Life4Billion procesó su solicitud utilizando el **Motor de Simulación Local Integrado** para garantizar el funcionamiento completo sin dependencias externas.\n\n` +
             `**Recomendación Técnica**: Para activar la inteligencia avanzada en tiempo real basada en datos reales a través de OpenAI GPT-4o o Gemini, asegúrese de configurar sus claves de API secretas (OpenAI o Gemini) en el panel de secretos y reinicie el servidor de desarrollo.`;
         }
       } else {
         if (lowerPrompt.includes("receita") || lowerPrompt.includes("financeiro") || lowerPrompt.includes("julho") || lowerPrompt.includes("revenue") || lowerPrompt.includes("finance") || lowerPrompt.includes("july") || lowerPrompt.includes("budget") || lowerPrompt.includes("cash")) {
-          simulatedResponse = "### OmniSaaS Financial Health Report (Vesta AI)\n\n" +
+          simulatedResponse = "### Life4Billion Financial Health Report (Life4Billion AI)\n\n" +
             "• **Gross Revenue**: $17,700.00\n" +
             "• **Operating Expenses**: $1,880.00\n" +
             "• **Estimated Net Profit**: $15,820.00 (Operating Margin of **89.3%**)\n\n" +
             "**Resource Allocation Analysis**:\n" +
-            "Your largest recurring expense is in *Cloud Infrastructure / SaaS (AWS/Supabase)*, corresponding to **77.1%** of your total monthly liabilities. \n\n" +
+            "Your largest recurring expense is in *Cloud Infrastructure (AWS/Supabase)*, corresponding to **77.1%** of your total monthly liabilities. \n\n" +
             "**Strategic Recommendations**:\n" +
             "1. **Tax Provisioning**: It is recommended to provision **12%** of each revenue entry into a dedicated account to cover quarterly corporate taxes.\n" +
             "2. **Cloud Optimization**: Consider applying for a startup credits package or migrating to 1-year reserved instances to reduce infrastructure costs by up to **32%**.";
         } else if (lowerPrompt.includes("estoque") || lowerPrompt.includes("produto") || lowerPrompt.includes("sku") || lowerPrompt.includes("venda") || lowerPrompt.includes("stock") || lowerPrompt.includes("sku") || lowerPrompt.includes("product") || lowerPrompt.includes("sale") || lowerPrompt.includes("inventory")) {
-          simulatedResponse = "### Stock Audit and Product Catalog (Vesta AI)\n\n" +
+          simulatedResponse = "### Stock Audit and Product Catalog (Life4Billion AI)\n\n" +
             "• **General Status**: Fair (1 SKU at critical replenishment point).\n" +
-            "• **Red Alert**: The product `'All-in-One Executive Mentorship'` (SKU: `OS-MENTOR-HQ`) has only **8 virtual units** free in the current schedule (safety minimum: 10).\n\n" +
+            "• **Red Alert**: The product `'All-in-One Executive Mentorship'` (SKU: `L4B-MENTOR-HQ`) has only **8 virtual units** free in the current schedule (safety minimum: 10).\n\n" +
             "**Risk Analysis**: Moderate risk of intangible stockout if an active marketing campaign runs in the next 48 hours.\n\n" +
             "**Immediate Action Suggested**:\n" +
             "1. Increase slot limits or release new dates in the ERP calendar.\n" +
-            "2. The SKU `'OmniSaaS Pro Monthly License'` (Digital) operates with infinite automated inventory and accounts for **82%** of your recurring flow.";
+            "2. The SKU `'Life4Billion Pro Monthly License'` (Digital) operates with infinite automated inventory and accounts for **82%** of your recurring flow.";
         } else if (lowerPrompt.includes("funcionário") || lowerPrompt.includes("salário") || lowerPrompt.includes("folha") || lowerPrompt.includes("clt") || lowerPrompt.includes("trabalhista") || lowerPrompt.includes("employee") || lowerPrompt.includes("salary") || lowerPrompt.includes("payroll") || lowerPrompt.includes("tax") || lowerPrompt.includes("job")) {
-          simulatedResponse = "### HR Audit and Payroll Costs (Vesta AI)\n\n" +
+          simulatedResponse = "### HR Audit and Payroll Costs (Life4Billion AI)\n\n" +
             "• **Active Collaborators**: 3 contractors/employees.\n" +
             "• **Nominal Monthly Cost (Payroll)**: $31,500.00\n" +
             "• **Processing Status**: Current payroll processed for 2 collaborators; 1 collaborator (UI/UX Designer) awaiting manual benefits approval.\n\n" +
             "**Important Legal Guidelines**:\n" +
             "• Ensure you complete the payroll tax filing and employer social contributions by the due date to avoid late payment penalties of **2% per month**.";
         } else if (lowerPrompt.includes("hábito") || lowerPrompt.includes("saúde") || lowerPrompt.includes("gestação") || lowerPrompt.includes("gravidez") || lowerPrompt.includes("dieta") || lowerPrompt.includes("habit") || lowerPrompt.includes("health") || lowerPrompt.includes("pregnancy") || lowerPrompt.includes("baby") || lowerPrompt.includes("diet")) {
-          simulatedResponse = "### Medical Diagnostic & Nutritional Monitoring (Vesta AI)\n\n" +
+          simulatedResponse = "### Medical Diagnostic & Nutritional Monitoring (Life4Billion AI)\n\n" +
             "• **Key Metric**: Excellent hydration engagement (active 4-day streak of drinking 3L/day).\n" +
             "• **Pregnancy Stage**: Your record indicates **14 weeks of pregnancy** (the baby is approximately the size of a lemon, ~8.5 cm in length).\n\n" +
             "**Predicted Symptoms & Recommendations**:\n" +
@@ -287,20 +287,20 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
             "2. **Nutrition**: Keep small, frequent meals throughout the day, rich in complex carbohydrates, folic acid, and iron.\n" +
             "3. Avoid long fasting periods to prevent gestational hypoglycemia.";
         } else {
-          simulatedResponse = `### OmniSaaS Strategic Report\n\n` +
+          simulatedResponse = `### Life4Billion Strategic Report\n\n` +
             `Your question: *"${cleanText}"*\n\n` +
-            `OmniSaaS processed your request using the **Integrated Local Simulation Engine** to ensure complete functionality without external dependencies.\n\n` +
+            `Life4Billion processed your request using the **Integrated Local Simulation Engine** to ensure complete functionality without external dependencies.\n\n` +
             `**Technical Recommendation**: To activate advanced real-time intelligence based on real data via OpenAI GPT-4o or Gemini, please configure your secret API keys (OpenAI or Gemini) in the secrets panel of your console and restart the development server.`;
         }
       }
 
       // Save to LocalDatabase history
-      LocalDatabase.addAiHistory(cleanText, simulatedResponse, 150, language.startsWith('pt') ? "Motor de IA OmniSaaS (Simulador Local)" : language.startsWith('es') ? "Motor de IA OmniSaaS (Simulador Local)" : "OmniSaaS AI Engine (Local Simulator)");
+      LocalDatabase.addAiHistory(cleanText, simulatedResponse, 150, language.startsWith('pt') ? "Motor de IA Life4Billion (Simulador Local)" : language.startsWith('es') ? "Motor de IA Life4Billion (Simulador Local)" : "Life4Billion AI Engine (Local Simulator)");
       // Refresh
       setHistory(LocalDatabase.getAiHistory());
       setPrompt('');
       onShowNotification(
-        'OmniSaaS Copilot ✨', 
+        'Life4Billion AI ✨', 
         language.startsWith('pt') 
           ? 'Relatório estratégico compilado localmente com sucesso!' 
           : language.startsWith('es')
@@ -314,6 +314,7 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
   };
 
   const handleClearHistory = () => {
+    localStorage.setItem('life4billion_ai_history', JSON.stringify([]));
     localStorage.setItem('omnisaas_ai_history', JSON.stringify([]));
     setHistory([]);
     onShowNotification(
@@ -390,7 +391,7 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
             <div>
               <h2 className="text-sm font-bold text-white flex items-center">
                 <Sparkles className="w-4 h-4 mr-1 text-indigo-400 fill-indigo-400/20" />
-                Vesta AI Copilot Engine
+                Life4Billion AI Engine
               </h2>
               <p className="text-[10px] text-slate-500 mt-0.5">
                 {language.startsWith('pt') 
@@ -435,8 +436,6 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
                 </div>
                 <div className="bg-slate-950/60 border border-slate-850/80 rounded-2xl rounded-tl-none px-4 py-3 max-w-xl text-slate-200 shadow-sm leading-relaxed space-y-2">
                   <p className="whitespace-pre-wrap">{h.response}</p>
-                  
-                  {/* Provider tag */}
                   <div className="flex flex-col space-y-1 border-t border-slate-900 pt-2">
                     <div className="flex items-center space-x-1 text-[9px] text-slate-500">
                       <CheckCircle2 className="w-3 h-3 text-emerald-500" />
@@ -448,11 +447,11 @@ export default function AiCopilotView({ onShowNotification }: AiCopilotViewProps
                     {h.provider && h.provider.toLowerCase().includes('simulator') && (
                       <div className="text-[9.5px] text-amber-500/95 leading-normal mt-1 bg-amber-955/10 border border-amber-900/20 p-2 rounded-lg">
                         {language.startsWith('pt') ? (
-                          <>⚠️ <strong>Modo Resiliência Ativado:</strong> As chaves de nuvem (OpenAI/Gemini) externas atingiram limites de cota ou instabilidade temporária de rede. O OmniSaaS mitigou o erro automaticamente utilizando o simulador preditivo integrado para que sua experiência continue 100% fluida e funcional!</>
+                          <>⚠️ <strong>Modo Resiliência Ativado:</strong> As chaves de nuvem (OpenAI/Gemini) externas atingiram limites de cota ou instabilidade temporária de rede. O Life4Billion mitigou o erro automaticamente utilizando o simulador preditivo integrado para que sua experiência continue 100% fluida e funcional!</>
                         ) : language.startsWith('es') ? (
-                          <>⚠️ <strong>Modo de Resiliencia Activo:</strong> Las claves de nube externas (OpenAI/Gemini) alcanzaron los límites de cuota o inestabilidad de red. ¡OmniSaaS mitigó el error automáticamente utilizando el simulador predictivo integrado para que su experiencia continúe siendo 100% fluida y funcional!</>
+                          <>⚠️ <strong>Modo de Resiliencia Activo:</strong> Las claves de nube externas (OpenAI/Gemini) alcanzaron los límites de cuota o inestabilidad de red. ¡Life4Billion mitigó el error automáticamente utilizando el simulador predictivo integrado para que su experiencia continúe siendo 100% fluida y funcional!</>
                         ) : (
-                          <>⚠️ <strong>Resilience Mode Active:</strong> External cloud keys (OpenAI/Gemini) hit quota limits or network instability. OmniSaaS automatically mitigated the error using the integrated predictive simulator so your experience remains 100% fluid and functional!</>
+                          <>⚠️ <strong>Resilience Mode Active:</strong> External cloud keys (OpenAI/Gemini) hit quota limits or network instability. Life4Billion automatically mitigated the error using the integrated predictive simulator so your experience remains 100% fluid and functional!</>
                         )}
                       </div>
                     )}

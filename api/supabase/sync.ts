@@ -38,9 +38,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const syncedKeys: string[] = [];
     
+    let tableName = "life4billion_store";
+    // Quick test if life4billion_store exists, otherwise try omnisaas_store
+    const testCheck = await client.from("life4billion_store").select("key").limit(1);
+    if (testCheck.error) {
+      const fallbackCheck = await client.from("omnisaas_store").select("key").limit(1);
+      if (!fallbackCheck.error) {
+        tableName = "omnisaas_store";
+      }
+    }
+
     for (const [key, val] of Object.entries(data)) {
       const { error } = await client
-        .from("omnisaas_store")
+        .from(tableName)
         .upsert({ 
           key, 
           value: val, 
@@ -53,8 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const isMissingTable = 
           error.code === '42P01' || 
           error.code === 'PGRST116' || 
-          error.message?.toLowerCase().includes('relation "omnisaas_store" does not exist') || 
-          error.message?.toLowerCase().includes('does not exist') ||
+          error.message?.toLowerCase().includes('does not exist') || 
           error.message?.toLowerCase().includes('schema cache') ||
           error.message?.toLowerCase().includes('could not find the table');
 
@@ -62,15 +71,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(404).json({
             success: false,
             needsInitialization: true,
-            error: "A tabela 'omnisaas_store' não existe no banco de dados.",
-            sql: `CREATE TABLE omnisaas_store (
+            error: "A tabela 'life4billion_store' não existe no banco de dados.",
+            sql: `CREATE TABLE life4billion_store (
   key TEXT PRIMARY KEY,
   value JSONB,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE omnisaas_store ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Permitir tudo para todos" ON omnisaas_store FOR ALL USING (true) WITH CHECK (true);`
+ALTER TABLE life4billion_store ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir tudo para todos" ON life4billion_store FOR ALL USING (true) WITH CHECK (true);`
           });
         }
         throw error;

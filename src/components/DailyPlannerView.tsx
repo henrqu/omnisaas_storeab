@@ -1070,7 +1070,7 @@ export default function DailyPlannerView({ onShowNotification }: DailyPlannerVie
                         <td className="p-3">
                           <button
                             onClick={() => {
-                              const nextStatus = b.status === 'Pendente' ? 'Em Progresso' : b.status === 'Em Progresso' ? 'Concluído' : 'Pendente';
+                              const nextStatus: 'Pendente' | 'Em Progresso' | 'Concluído' = b.status === 'Pendente' ? 'Em Progresso' : b.status === 'Em Progresso' ? 'Concluído' : 'Pendente';
                               const updated = record.dtbBlocks.map(item => item.id === b.id ? { ...item, status: nextStatus } : item);
                               updateRecord({ dtbBlocks: updated });
                             }}

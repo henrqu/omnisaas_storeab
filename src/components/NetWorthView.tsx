@@ -703,9 +703,9 @@ export default function NetWorthView({ onShowNotification }: { onShowNotificatio
                         </td>
                         <td className="py-3.5 text-center">
                           <div className="flex justify-center space-x-1.5">
-                            {item.photo && <ImageIcon className="w-4 h-4 text-indigo-400" title="Foto vinculada" />}
-                            {item.receipt && <FileText className="w-4 h-4 text-emerald-400" title="Recibo vinculado" />}
-                            {item.document && <FileCheck className="w-4 h-4 text-purple-400" title="Escritura vinculada" />}
+                            {item.photo && <span title="Foto vinculada"><ImageIcon className="w-4 h-4 text-indigo-400" /></span>}
+                            {item.receipt && <span title="Recibo vinculado"><FileText className="w-4 h-4 text-emerald-400" /></span>}
+                            {item.document && <span title="Escritura vinculada"><FileCheck className="w-4 h-4 text-purple-400" /></span>}
                             {!item.photo && !item.receipt && !item.document && <span className="text-slate-600">—</span>}
                           </div>
                         </td>

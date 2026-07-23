@@ -53,7 +53,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
 
     const updated = LocalDatabase.updateProfile({
       full_name: fullName.trim(),
-      avatar_url: avatar.trim() || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'
+      avatar_url: avatar.trim()
     });
 
     setProfile(updated);
@@ -107,7 +107,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
 
   // Helper to resolve monthly cost
   const getPlanMonthlyPrice = (tierName: string) => {
-    if (tierName === 'Pro Plan' || tierName === 'Pro' || tierName === 'Vesta Pro') {
+    if (tierName === 'Pro Plan' || tierName === 'Pro' || tierName === 'Life4Billion Pro' || tierName === 'Vesta Pro') {
       if (language.startsWith('pt')) return 59.90;
       return 11.99;
     }
@@ -173,7 +173,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">{t('emailLabel', 'E-mail de Cadastro (Identificação)')}</label>
               <input 
-                type="text" disabled value="admin@vestasolusoes.com.br"
+                type="text" disabled value="admin@life4billion.com"
                 className="w-full bg-slate-950/40 border border-slate-850/60 text-slate-500 rounded-xl px-3 py-2 text-xs focus:outline-none cursor-not-allowed"
               />
             </div>
@@ -209,7 +209,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
             <div className="flex items-center space-x-2 mt-1">
               <Crown className="w-5 h-5 text-amber-400 fill-amber-400/15" />
               <h2 className="text-lg font-bold text-white capitalize">
-                {sub?.tier_name === 'Pro Plan' || sub?.tier_name === 'Pro' || sub?.tier_name === 'Vesta Pro' ? t('proPlan', 'Plano Pro') : sub?.tier_name || t('freeTrial', 'Avaliação Grátis')}
+                {sub?.tier_name === 'Pro Plan' || (sub?.tier_name as string) === 'Pro' || (sub?.tier_name as string) === 'Life4Billion Pro' || (sub?.tier_name as string) === 'Vesta Pro' ? t('proPlan', 'Plano Pro') : sub?.tier_name || t('freeTrial', 'Avaliação Grátis')}
               </h2>
             </div>
             <p className="text-xs text-slate-400 mt-1 font-medium">
@@ -251,7 +251,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
               <div className="space-y-4">
                 <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider bg-indigo-950/40 border border-indigo-900 px-2 py-0.5 rounded-full">{t('professionalTier', 'Profissional')}</span>
                 <div>
-                  <h4 className="text-base font-bold text-white mt-1">Vesta Pro</h4>
+                  <h4 className="text-base font-bold text-white mt-1">Life4Billion Pro</h4>
                   <p className="text-slate-400 text-xs mt-1">{t('proPlanDesc', 'Ideal para autônomos, investidores e consultórios.')}</p>
                 </div>
                 <div className="text-white text-2xl font-black font-mono">
@@ -268,7 +268,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
                 disabled={isCheckoutLoading}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl mt-6 transition disabled:opacity-50"
               >
-                {isCheckoutLoading && checkoutPlan === 'pro' ? t('processingStripe', 'Processando Stripe...') : sub?.tier_name === 'Pro Plan' || sub?.tier_name === 'Pro' || sub?.tier_name === 'Vesta Pro' ? t('planActiveBtn', 'Plano Ativo') : t('buyProStripe', 'Comprar Pro via Stripe')}
+                {isCheckoutLoading && checkoutPlan === 'pro' ? t('processingStripe', 'Processando Stripe...') : sub?.tier_name === 'Pro Plan' || (sub?.tier_name as string) === 'Pro' || (sub?.tier_name as string) === 'Life4Billion Pro' || (sub?.tier_name as string) === 'Vesta Pro' ? t('planActiveBtn', 'Plano Ativo') : t('buyProStripe', 'Comprar Pro via Stripe')}
               </button>
             </div>
 

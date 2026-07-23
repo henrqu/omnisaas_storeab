@@ -1,6 +1,6 @@
 {
-  "name": "OmniSaaS - Personal & Business OS",
-  "description": "A high-performance, responsive, all-in-one Life & Business management SaaS platform designed for Supabase (PostgreSQL), Stripe, and OpenAI, featuring habits, health, CRM, inventory, HR payroll, and finances.",
+  "name": "Life4Billion",
+  "description": "Life4Billion — AI, finance, productivity, and personal growth for billions of lives.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

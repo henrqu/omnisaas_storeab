@@ -216,7 +216,7 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
         title: 'High-Impact Growth Strategy',
         description: 'Complete playbook on user acquisition, dynamic viral loops, and digital product-led growth optimization for SaaS founders.',
         cover_url: 'https://images.unsplash.com/photo-1553484771-047a44eee27b?w=400&q=80',
-        product_url: 'https://vestasolucoes.com.br/growth',
+        product_url: 'https://life4billion.com/growth',
         category: 'growth',
         price: 29.90,
         tags: ['growth', 'marketing', 'saas', 'scalability'],
@@ -232,7 +232,7 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
         title: 'Mastering Personal Ledger & Assets',
         description: 'Learn the fundamental rules of allocating investments, managing liabilities, tracking gold, and maximizing passive monthly wealth growth.',
         cover_url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&q=80',
-        product_url: 'https://vestasolucoes.com.br/finances',
+        product_url: 'https://life4billion.com/finances',
         category: 'money',
         price: 19.99,
         tags: ['finances', 'investments', 'wealth', 'tax-saving'],
@@ -248,7 +248,7 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
         title: 'Peak Performance Nutrition Guide',
         description: 'Maximize sleep, control daily caloric logs, track macronutrients, and balance clinical signs for enhanced mental clarity.',
         cover_url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80',
-        product_url: 'https://vestasolucoes.com.br/health',
+        product_url: 'https://life4billion.com/health',
         category: 'health',
         price: 14.90,
         tags: ['diet', 'health', 'fitness', 'biohacking'],
@@ -319,10 +319,10 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
         body: JSON.stringify({
           prompt: promptText,
           systemInstruction: language.startsWith('pt')
-            ? "Você é o Consultor Literário Vesta AI. Analise o perfil do usuário e faça recomendações estratégicas de e-books e guias digitais com base no catálogo disponível."
+            ? "Você é o Consultor Literário Life4Billion AI. Analise o perfil do usuário e faça recomendações estratégicas de e-books e guias digitais com base no catálogo disponível."
             : language.startsWith('es')
-            ? "Eres el Consultor Literario Vesta AI. Analiza el perfil del usuario y haz recomendaciones estratégicas de libros electrónicos y guías digitales según el catálogo disponible."
-            : "You are the Vesta AI Literary Consultant. Analyze the user profile and make strategic recommendations of e-books and digital guides based on the available catalog."
+            ? "Eres el Consultor Literario Life4Billion AI. Analiza el perfil del usuario y haz recomendaciones estratégicas de libros electrónicos y guías digitales según el catálogo disponible."
+            : "You are the Life4Billion AI Literary Consultant. Analyze the user profile and make strategic recommendations of e-books and digital guides based on the available catalog."
         })
       });
 
@@ -336,7 +336,7 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
           }
         });
         loadEbooks();
-        onShowNotification('Vesta AI Recommend 🤖', language === 'pt' ? 'Recomendações literárias geradas com sucesso!' : 'Literary recommendations generated successfully!', 'success');
+        onShowNotification('Life4Billion AI Recommend 🤖', language === 'pt' ? 'Recomendações literárias geradas com sucesso!' : 'Literary recommendations generated successfully!', 'success');
       } else {
         throw new Error('AI Error');
       }
@@ -345,7 +345,8 @@ export default function LearningHubView({ onShowNotification, isAdminView = fals
       // Fallback response in case OpenAI is not configured or offline
       let simulatedRec = '';
       if (language === 'pt') {
-        simulatedRec = `### 🤖 Recomendações Vesta AI Personalizadas
+        simulatedRec = `### 🤖 Recomendações Life4Billion AI Personalizadas
+
 
 Com base nos seus hábitos ativos de **Meditação** e seus objetivos de **Atingir R$ 20k de MRR**, sugerimos com prioridade:
 
@@ -356,7 +357,8 @@ Com base nos seus hábitos ativos de **Meditação** e seus objetivos de **Ating
 
 *👉 Clique no botão **View Book** de qualquer e-book abaixo para iniciar o seu aprendizado imediatamente!*`;
       } else {
-        simulatedRec = `### 🤖 Personalized Vesta AI Recommendations
+        simulatedRec = `### 🤖 Personalized Life4Billion AI Recommendations
+
 
 Based on your active habits of **Meditation** and your core business goals like **Reaching $20k MRR**, we prioritize:
 
@@ -375,7 +377,7 @@ Based on your active habits of **Meditation** and your core business goals like 
         LocalDatabase.incrementEBookRecommendation(list[0].id);
         loadEbooks();
       }
-      onShowNotification('Vesta AI Recommend 🤖', language === 'pt' ? 'Recomendação gerada com inteligência local redundante!' : 'Recommendation loaded via local redundancy engine!', 'info');
+      onShowNotification('Life4Billion AI Recommend 🤖', language === 'pt' ? 'Recomendação gerada com inteligência local redundante!' : 'Recommendation loaded via local redundancy engine!', 'info');
     } finally {
       setIsGeneratingAi(false);
     }
@@ -489,7 +491,7 @@ Based on your active habits of **Meditation** and your core business goals like 
               <div className="space-y-1">
                 <div className="flex items-center space-x-2 text-indigo-400">
                   <Sparkles className="w-4 h-4 animate-pulse" />
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider">VESTA INTELLIGENCE HUB</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider">LIFE4BILLION HUB</span>
                 </div>
                 <h3 className="text-sm font-bold text-slate-100">
                   {language === 'pt' ? 'Quer uma sugestão de estudo personalizada?' : 'Looking for a study recommendation?'}
@@ -979,7 +981,7 @@ Based on your active habits of **Meditation** and your core business goals like 
                 <p className="text-xs font-black text-slate-200 mt-2 truncate max-w-[150px]" title={mostRecommendedBook}>
                   {mostRecommendedBook}
                 </p>
-                <p className="text-[9px] text-indigo-450 mt-1">Suggested by Vesta AI</p>
+                <p className="text-[9px] text-indigo-450 mt-1">Suggested by Life4Billion AI</p>
               </div>
               <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20">
                 <Sparkles className="w-5 h-5" />

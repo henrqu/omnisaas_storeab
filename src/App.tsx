@@ -42,6 +42,7 @@ import ProductivityView from './components/ProductivityView';
 import NetWorthView from './components/NetWorthView';
 import CalculatorsView from './components/CalculatorsView';
 import LearningHubView from './components/LearningHubView';
+import { EmergencyFundView } from './components/EmergencyFundView';
 import LoginView from './components/LoginView';
 import OmniSaaSLogo from './components/OmniSaaSLogo';
 import SplashScreen from './components/SplashScreen';
@@ -88,17 +89,12 @@ export default function App() {
   const [isRightProfileOpen, setIsRightProfileOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('omnisaas_logged_in') === 'true';
+    const saved = localStorage.getItem('omnisaas_logged_in');
+    return saved !== 'false';
   });
 
   const [activeView, setActiveView] = useState<string>('dashboard');
-  const [showSplash, setShowSplash] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem('omnisaas_splash_shown') !== 'true';
-    } catch (e) {
-      return true;
-    }
-  });
+  const [showSplash, setShowSplash] = useState<boolean>(false);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -443,7 +439,9 @@ export default function App() {
     const normLang = language.toLowerCase().startsWith('pt') ? 'pt' : language.toLowerCase().startsWith('es') ? 'es' : 'en';
     const entry = translations[key];
     if (!entry) return fallback || key;
-    return entry[normLang] || fallback || key;
+    const val = entry[normLang] || fallback || key;
+    if (typeof val !== 'string') return fallback || key;
+    return val;
   };
 
   const toggleTheme = () => {
@@ -456,25 +454,28 @@ export default function App() {
 
   // Nav Items definition for visual sidebars
   const navItems = [
-    { id: 'dashboard', label: t('dashboard', 'Painel Executivo'), icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'finance', label: t('finance', 'Finanças & Orçamentos'), icon: <Coins className="w-4 h-4" /> },
+    { id: 'dashboard', label: t('dashboard', 'Executive Dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'emergency-fund', label: t('emergencyFundNav', 'Emergency Fund & Protection'), icon: <ShieldCheck className="w-4 h-4 text-rose-400" /> },
+    { id: 'finance', label: t('finance', 'Finances & Budgets'), icon: <Coins className="w-4 h-4" /> },
     { id: 'net-worth', label: t('netWorth', 'Net Worth'), icon: <Briefcase className="w-4 h-4 text-indigo-400" /> },
-    { id: 'calculators', label: t('calculators', 'Calculadoras 📊'), icon: <Calculator className="w-4 h-4 text-emerald-450" /> },
-    { id: 'productivity', label: t('productivity', 'Estudos & Pomodoro'), icon: <BookOpen className="w-4 h-4 text-emerald-400" /> },
-    { id: 'habits', label: t('habits', 'Hábitos & Metas'), icon: <Flame className="w-4 h-4" /> },
-    { id: 'health', label: t('health', 'Sinais Vitais & Dieta'), icon: <Heart className="w-4 h-4" /> },
-    { id: 'family', label: t('family', 'Gestão Familiar'), icon: <Users className="w-4 h-4" /> },
-    { id: 'company', label: t('company', 'Empresa & Folha CLT'), icon: <Building className="w-4 h-4" /> },
-    { id: 'crm', label: t('crm', 'Vendas & CRM'), icon: <ShoppingCart className="w-4 h-4" /> },
-    { id: 'ai', label: t('ai', 'Copiloto Vesta AI'), icon: <Sparkles className="w-4 h-4 text-emerald-400" /> },
+    { id: 'calculators', label: t('calculators', 'Calculators 📊'), icon: <Calculator className="w-4 h-4 text-emerald-450" /> },
+    { id: 'productivity', label: t('productivity', 'Studies & Pomodoro'), icon: <BookOpen className="w-4 h-4 text-emerald-400" /> },
+    { id: 'habits', label: t('habits', 'Habits & Goals'), icon: <Flame className="w-4 h-4" /> },
+    { id: 'health', label: t('health', 'Vital Signs & Diet'), icon: <Heart className="w-4 h-4" /> },
+    { id: 'family', label: t('family', 'Family Management'), icon: <Users className="w-4 h-4" /> },
+    { id: 'company', label: t('company', 'Company & HR Payroll'), icon: <Building className="w-4 h-4" /> },
+    { id: 'crm', label: t('crm', 'Sales & CRM'), icon: <ShoppingCart className="w-4 h-4" /> },
+    { id: 'ai', label: t('ai', 'Life4Billion AI'), icon: <Sparkles className="w-4 h-4 text-emerald-400" /> },
     { id: 'learning-hub', label: t('learningHub', 'Learning Hub 📚'), icon: <BookOpen className="w-4 h-4 text-amber-400" /> },
-    { id: 'profile', label: t('profile', 'Assinatura & Perfil'), icon: <User className="w-4 h-4" /> },
+    { id: 'profile', label: t('profile', 'Subscription & Profile'), icon: <User className="w-4 h-4" /> },
   ];
 
   const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
         return <DashboardView onNavigate={setActiveView} onShowNotification={handleShowNotification} />;
+      case 'emergency-fund':
+        return <EmergencyFundView onShowNotification={handleShowNotification} />;
       case 'finance':
         return <FinanceView onShowNotification={handleShowNotification} />;
       case 'net-worth':
@@ -563,7 +564,9 @@ export default function App() {
           <SplashScreen key="splash" onComplete={handleSplashComplete} />
         )}
       </AnimatePresence>
-      <div className="min-h-screen bg-slate-950 text-slate-300 flex flex-col md:flex-row font-sans" id="omnisaas-root-layout">
+      <div className={`min-h-screen flex flex-col md:flex-row font-sans transition-colors duration-200 ${
+        theme === 'light' ? 'bg-slate-100 text-slate-800' : 'bg-slate-950 text-slate-300'
+      }`} id="life4billion-root-layout">
         
         {/* SIDEBAR ESQUERDA (Desktop Navigation) */}
         <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 h-screen sticky top-0" id="desktop-sidebar">
@@ -743,14 +746,20 @@ export default function App() {
               {/* User Avatar & Name */}
               <div className="flex items-center justify-between pb-2 border-b border-white/5">
                 <div className="flex items-center space-x-2.5">
-                  <img 
-                    src={profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'} 
-                    alt="Avatar" 
-                    className="w-8 h-8 rounded-lg object-cover border border-emerald-500/30"
-                  />
+                  {profile?.avatar_url && profile.avatar_url.trim() !== '' ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Avatar" 
+                      className="w-8 h-8 rounded-lg object-cover border border-emerald-500/30"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-bold text-xs shrink-0">
+                      {profile?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'LK'}
+                    </div>
+                  )}
                   <div>
                     <p className="text-xs font-bold text-white leading-none">{profile?.full_name || 'Usuário'}</p>
-                    <p className="text-[10px] text-slate-500 mt-1">{profile?.email || 'user@omnisaas.com'}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{profile?.email || 'user@life4billion.com'}</p>
                   </div>
                 </div>
                 
@@ -945,11 +954,17 @@ export default function App() {
                   onClick={() => setIsRightProfileOpen(!isRightProfileOpen)}
                   className="flex items-center space-x-2.5 pl-2 border-l border-white/5 cursor-pointer hover:opacity-80 transition"
                 >
-                  <img 
-                    src={profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'} 
-                    alt="Avatar" 
-                    className="w-7 h-7 rounded-lg object-cover border border-emerald-500/30"
-                  />
+                  {profile?.avatar_url && profile.avatar_url.trim() !== '' ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Avatar" 
+                      className="w-7 h-7 rounded-lg object-cover border border-emerald-500/30"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-bold text-[10px] shrink-0">
+                      {profile?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'LK'}
+                    </div>
+                  )}
                   <span className="text-xs font-bold text-slate-350">{profile?.full_name || 'Usuário'}</span>
                 </div>
 

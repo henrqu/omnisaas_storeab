@@ -24,7 +24,12 @@ import {
   Notification,
   Subscription,
   Profile,
-  EBook
+  EBook,
+  EmergencyFund,
+  Debt,
+  FinancialCard,
+  PaidDebtLog,
+  DashboardType
 } from '../types/schema';
 
 // Helper to generate UUIDs
@@ -36,7 +41,7 @@ const DEFAULT_PROFILE: Profile = {
   updated_at: new Date().toISOString(),
   username: 'lacasaking',
   full_name: 'Lucas King',
-  avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  avatar_url: '',
   role: 'owner',
 };
 
@@ -100,13 +105,13 @@ const DEFAULT_BUDGETS: Budget[] = [
 ];
 
 const DEFAULT_COMPANIES: Company[] = [
-  { id: 'comp-default-abc', owner_id: 'user-default-123', name: 'Vesta Software & IA Ltda', tax_id: '45.123.897/0001-22', address: 'Av. Paulista, 1000 - São Paulo, SP', website: 'https://vestasites.com' },
+  { id: 'comp-default-abc', owner_id: 'user-default-123', name: 'Life4Billion Tech & IA Ltda', tax_id: '45.123.897/0001-22', address: 'Av. Paulista, 1000 - São Paulo, SP', website: 'https://life4billion.com' },
 ];
 
 const DEFAULT_EMPLOYEES: Employee[] = [
-  { id: 'emp-1', company_id: 'comp-default-abc', first_name: 'Juliana', last_name: 'Mendes', email: 'juliana.mendes@vesta.com', role: 'Engenheira de IA Principal', hire_date: '2025-01-15', salary: 14500.00, status: 'active' },
-  { id: 'emp-2', company_id: 'comp-default-abc', first_name: 'Bruno', last_name: 'Almeida', email: 'bruno.almeida@vesta.com', role: 'UI/UX Designer', hire_date: '2025-04-10', salary: 7800.00, status: 'active' },
-  { id: 'emp-3', company_id: 'comp-default-abc', first_name: 'Carla', last_name: 'Silveira', email: 'carla.silveira@vesta.com', role: 'Gerente de Growth & Marketing', hire_date: '2025-11-01', salary: 9200.00, status: 'active' },
+  { id: 'emp-1', company_id: 'comp-default-abc', first_name: 'Juliana', last_name: 'Mendes', email: 'juliana.mendes@life4billion.com', role: 'Engenheira de IA Principal', hire_date: '2025-01-15', salary: 14500.00, status: 'active' },
+  { id: 'emp-2', company_id: 'comp-default-abc', first_name: 'Bruno', last_name: 'Almeida', email: 'bruno.almeida@life4billion.com', role: 'UI/UX Designer', hire_date: '2025-04-10', salary: 7800.00, status: 'active' },
+  { id: 'emp-3', company_id: 'comp-default-abc', first_name: 'Carla', last_name: 'Silveira', email: 'carla.silveira@life4billion.com', role: 'Gerente de Growth & Marketing', hire_date: '2025-11-01', salary: 9200.00, status: 'active' },
 ];
 
 const DEFAULT_PAYROLL: Payroll[] = [
@@ -116,9 +121,9 @@ const DEFAULT_PAYROLL: Payroll[] = [
 ];
 
 const DEFAULT_PRODUCTS: Product[] = [
-  { id: 'prod-1', company_id: 'comp-default-abc', name: 'Licença Mensal OmniSaaS Pro', sku: 'OS-PRO-M', price: 299.00, cost: 45.00, description: 'Acesso completo a todas as ferramentas corporativas, financeiras e pessoais com IA.' },
-  { id: 'prod-2', company_id: 'comp-default-abc', name: 'Integração de APIs Customizadas', sku: 'OS-API-CUSTOM', price: 1899.00, cost: 200.00, description: 'Pacote de integração e setup assistido de APIs para ERP do cliente.' },
-  { id: 'prod-3', company_id: 'comp-default-abc', name: 'Mentoria Executiva All-in-One', sku: 'OS-MENTOR-HQ', price: 3500.00, cost: 0, description: 'Seção de consultoria estratégica 1-on-1 com mentoria de arquitetura de software.' },
+  { id: 'prod-1', company_id: 'comp-default-abc', name: 'Licença Mensal Life4Billion Pro', sku: 'L4B-PRO-M', price: 299.00, cost: 45.00, description: 'Acesso completo a todas as ferramentas corporativas, financeiras e pessoais com IA.' },
+  { id: 'prod-2', company_id: 'comp-default-abc', name: 'Integração de APIs Customizadas', sku: 'L4B-API-CUSTOM', price: 1899.00, cost: 200.00, description: 'Pacote de integração e setup assistido de APIs para ERP do cliente.' },
+  { id: 'prod-3', company_id: 'comp-default-abc', name: 'Mentoria Executiva All-in-One', sku: 'L4B-MENTOR-HQ', price: 3500.00, cost: 0, description: 'Seção de consultoria estratégica 1-on-1 com mentoria de arquitetura de software.' },
 ];
 
 const DEFAULT_INVENTORY: Inventory[] = [
@@ -145,7 +150,7 @@ const DEFAULT_REPORTS: Report[] = [
     company_id: 'comp-default-abc',
     type: 'sales',
     name: 'Desempenho Comercial Trimestral',
-    data: JSON.stringify({ totalSales: 17244.00, count: 18, conversionRate: 14.2, topProduct: 'OmniSaaS Pro' }),
+    data: JSON.stringify({ totalSales: 17244.00, count: 18, conversionRate: 14.2, topProduct: 'Life4Billion Pro' }),
     created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
   }
 ];
@@ -155,16 +160,122 @@ const DEFAULT_AI_HISTORY: AiHistory[] = [
 ];
 
 const DEFAULT_NOTIFICATIONS: Notification[] = [
-  { id: uuid(), user_id: 'user-default-123', title: 'Boas-vindas ao OmniSaaS!', message: 'O seu sistema está configurado com 21 tabelas relacionais PostgreSQL e pronto para operar.', read: false, type: 'success', created_at: new Date().toISOString() },
-  { id: uuid(), user_id: 'user-default-123', title: 'Folha de Pagamento Aberta', message: 'A folha de pagamento de Bruno Almeida aguarda sua validação e processamento.', read: false, type: 'warning', created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
+  { id: uuid(), user_id: 'user-default-123', title: 'Welcome to Life4Billion!', message: 'Your platform is fully configured with Executive Dashboards and Emergency Fund Center.', read: false, type: 'success', created_at: new Date().toISOString() },
+  { id: uuid(), user_id: 'user-default-123', title: 'Payroll Ready', message: 'July payroll for team members is ready for approval.', read: false, type: 'warning', created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
 ];
 
+const DEFAULT_EMERGENCY_FUND: EmergencyFund = {
+  id: 'ef-default-1',
+  user_id: 'user-default-123',
+  target_amount: 15000,
+  current_balance: 7500,
+  deadline: '2026-12-31',
+  purpose: 'job_loss',
+  notes: '6 months of core living expenses reserve',
+  created_at: new Date().toISOString(),
+};
+
+const DEFAULT_DEBTS: Debt[] = [
+  {
+    id: 'debt-1',
+    user_id: 'user-default-123',
+    creditor: 'Platinum Visa Credit Card',
+    total_amount: 3200,
+    paid_amount: 1200,
+    interest_rate: 18.9,
+    minimum_payment: 150,
+    due_date: '2026-08-15',
+    category: 'credit_card',
+    status: 'active'
+  },
+  {
+    id: 'debt-2',
+    user_id: 'user-default-123',
+    creditor: 'Prime Auto Loan',
+    total_amount: 12500,
+    paid_amount: 4500,
+    interest_rate: 6.5,
+    minimum_payment: 320,
+    due_date: '2026-08-20',
+    category: 'personal_loan',
+    status: 'active'
+  }
+];
+
+const DEFAULT_CARDS: FinancialCard[] = [
+  {
+    id: 'card-1',
+    user_id: 'user-default-123',
+    name: 'Visa Infinite Sapphire',
+    bank: 'Chase Bank',
+    type: 'credit',
+    brand: 'visa',
+    limit_amount: 15000,
+    current_balance: 2450,
+    available_credit: 12550,
+    payment_due_date: '2026-08-12',
+    interest_rate: 18.5,
+    is_frozen: false,
+    last_4: '4821',
+    cardholder_name: 'LUCAS KING',
+    expiry_date: '09/29',
+    color: 'from-blue-900 via-indigo-900 to-slate-950'
+  },
+  {
+    id: 'card-2',
+    user_id: 'user-default-123',
+    name: 'Mastercard Black Edition',
+    bank: 'Citibank Private',
+    type: 'credit',
+    brand: 'master_black',
+    limit_amount: 35000,
+    current_balance: 4800,
+    available_credit: 30200,
+    payment_due_date: '2026-08-25',
+    interest_rate: 15.2,
+    is_frozen: false,
+    last_4: '9102',
+    cardholder_name: 'LUCAS KING',
+    expiry_date: '11/30',
+    color: 'from-zinc-950 via-neutral-900 to-black'
+  },
+  {
+    id: 'card-3',
+    user_id: 'user-default-123',
+    name: 'Mastercard Gold Preferred',
+    bank: 'Santander Premier',
+    type: 'credit',
+    brand: 'master_gold',
+    limit_amount: 20000,
+    current_balance: 1850,
+    available_credit: 18150,
+    payment_due_date: '2026-08-18',
+    interest_rate: 16.8,
+    is_frozen: false,
+    last_4: '7734',
+    cardholder_name: 'LUCAS KING',
+    expiry_date: '04/28',
+    color: 'from-amber-600 via-yellow-500 to-amber-700'
+  }
+];
+
+const DEFAULT_PAID_DEBTS: PaidDebtLog[] = [
+  {
+    id: 'paid-1',
+    user_id: 'user-default-123',
+    creditor: 'Retail Finance Store Card',
+    total_paid: 2500,
+    date_completed: '2026-05-10',
+    interest_saved: 380,
+    category: 'credit_card'
+  }
+];
 
 // Database Init & Storage Layer
 export class LocalDatabase {
   private static get<T>(key: string, defaultValue: T): T {
     try {
-      const stored = localStorage.getItem(`omnisaas_${key}`);
+      const stored = localStorage.getItem(`life4billion_${key}`) || localStorage.getItem(`omnisaas_${key}`);
       return stored ? JSON.parse(stored) : defaultValue;
     } catch {
       return defaultValue;
@@ -172,12 +283,12 @@ export class LocalDatabase {
   }
 
   private static set<T>(key: string, value: T): void {
-    localStorage.setItem(`omnisaas_${key}`, JSON.stringify(value));
+    localStorage.setItem(`life4billion_${key}`, JSON.stringify(value));
   }
 
   // Initializer
   static init() {
-    if (!localStorage.getItem('omnisaas_initialized')) {
+    if (!localStorage.getItem('life4billion_initialized') && !localStorage.getItem('omnisaas_initialized')) {
       this.set('profile', DEFAULT_PROFILE);
       this.set('subscription', DEFAULT_SUBSCRIPTION);
       this.set('habits', DEFAULT_HABITS);
@@ -198,7 +309,12 @@ export class LocalDatabase {
       this.set('reports', DEFAULT_REPORTS);
       this.set('ai_history', DEFAULT_AI_HISTORY);
       this.set('notifications', DEFAULT_NOTIFICATIONS);
-      localStorage.setItem('omnisaas_initialized', 'true');
+      this.set('emergency_fund', DEFAULT_EMERGENCY_FUND);
+      this.set('debts', DEFAULT_DEBTS);
+      this.set('cards', DEFAULT_CARDS);
+      this.set('paid_debts', DEFAULT_PAID_DEBTS);
+      this.set('dashboard_type', 'executive');
+      localStorage.setItem('life4billion_initialized', 'true');
     }
   }
 
@@ -884,4 +1000,156 @@ export class LocalDatabase {
     });
     this.set('ebooks', updated);
   }
+
+  // --- Dashboard Type Preference ---
+  static getDashboardType(): DashboardType {
+    return this.get<DashboardType>('dashboard_type', 'executive');
+  }
+
+  static setDashboardType(type: DashboardType): DashboardType {
+    this.set('dashboard_type', type);
+    return type;
+  }
+
+  // --- Emergency Fund ---
+  static getEmergencyFund(): EmergencyFund {
+    return this.get<EmergencyFund>('emergency_fund', DEFAULT_EMERGENCY_FUND);
+  }
+
+  static updateEmergencyFund(data: Partial<EmergencyFund>): EmergencyFund {
+    const current = this.getEmergencyFund();
+    const updated: EmergencyFund = { ...current, ...data };
+    this.set('emergency_fund', updated);
+    return updated;
+  }
+
+  // --- Debts ---
+  static getDebts(): Debt[] {
+    return this.get<Debt[]>('debts', DEFAULT_DEBTS);
+  }
+
+  static addDebt(debt: Omit<Debt, 'id' | 'user_id' | 'status'>): Debt {
+    const debts = this.getDebts();
+    const newDebt: Debt = {
+      ...debt,
+      id: uuid(),
+      user_id: 'user-default-123',
+      status: debt.paid_amount >= debt.total_amount ? 'paid' : 'active'
+    };
+    debts.push(newDebt);
+    this.set('debts', debts);
+    return newDebt;
+  }
+
+  static updateDebt(id: string, updates: Partial<Debt>): Debt[] {
+    const debts = this.getDebts();
+    const updated = debts.map(d => {
+      if (d.id === id) {
+        const item = { ...d, ...updates };
+        if (item.paid_amount >= item.total_amount) {
+          item.status = 'paid';
+        }
+        return item;
+      }
+      return d;
+    });
+    this.set('debts', updated);
+    return updated;
+  }
+
+  static deleteDebt(id: string): Debt[] {
+    const debts = this.getDebts().filter(d => d.id !== id);
+    this.set('debts', debts);
+    return debts;
+  }
+
+  static markDebtPaid(id: string): Debt[] {
+    const debts = this.getDebts();
+    const debtToPay = debts.find(d => d.id === id);
+    if (debtToPay) {
+      // Calculate interest saved estimation
+      const remainingMonths = 12;
+      const interestSaved = Math.round((debtToPay.total_amount - debtToPay.paid_amount) * (debtToPay.interest_rate / 100));
+      this.addPaidDebtLog({
+        creditor: debtToPay.creditor,
+        total_paid: debtToPay.total_amount,
+        date_completed: new Date().toISOString().split('T')[0],
+        interest_saved: Math.max(50, interestSaved),
+        category: debtToPay.category
+      });
+    }
+
+    const updated = debts.map(d => {
+      if (d.id === id) {
+        return { ...d, paid_amount: d.total_amount, status: 'paid' as const };
+      }
+      return d;
+    });
+    this.set('debts', updated);
+    return updated;
+  }
+
+  // --- Financial Cards ---
+  static getCards(): FinancialCard[] {
+    return this.get<FinancialCard[]>('cards', DEFAULT_CARDS);
+  }
+
+  static addCard(card: Omit<FinancialCard, 'id' | 'user_id' | 'available_credit'>): FinancialCard {
+    const cards = this.getCards();
+    const available_credit = Math.max(0, card.limit_amount - card.current_balance);
+    const newCard: FinancialCard = {
+      ...card,
+      available_credit,
+      id: uuid(),
+      user_id: 'user-default-123'
+    };
+    cards.push(newCard);
+    this.set('cards', cards);
+    return newCard;
+  }
+
+  static updateCard(id: string, updates: Partial<FinancialCard>): FinancialCard[] {
+    const cards = this.getCards();
+    const updated = cards.map(c => {
+      if (c.id === id) {
+        const item = { ...c, ...updates };
+        item.available_credit = Math.max(0, item.limit_amount - item.current_balance);
+        return item;
+      }
+      return c;
+    });
+    this.set('cards', updated);
+    return updated;
+  }
+
+  static deleteCard(id: string): FinancialCard[] {
+    const cards = this.getCards().filter(c => c.id !== id);
+    this.set('cards', cards);
+    return cards;
+  }
+
+  static toggleCardFreeze(id: string): FinancialCard[] {
+    const cards = this.getCards();
+    const updated = cards.map(c => c.id === id ? { ...c, is_frozen: !c.is_frozen } : c);
+    this.set('cards', updated);
+    return updated;
+  }
+
+  // --- Paid Debt Logs ---
+  static getPaidDebts(): PaidDebtLog[] {
+    return this.get<PaidDebtLog[]>('paid_debts', DEFAULT_PAID_DEBTS);
+  }
+
+  static addPaidDebtLog(log: Omit<PaidDebtLog, 'id' | 'user_id'>): PaidDebtLog {
+    const paidList = this.getPaidDebts();
+    const newLog: PaidDebtLog = {
+      ...log,
+      id: uuid(),
+      user_id: 'user-default-123'
+    };
+    paidList.unshift(newLog);
+    this.set('paid_debts', paidList);
+    return newLog;
+  }
 }
+

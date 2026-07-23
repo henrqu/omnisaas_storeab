@@ -250,7 +250,7 @@ const generateTemplateOnDemand = (name: string, category: string, useCase: strin
     cols = ['Descrição da Despesa', 'Colaborador', 'Setor Solicitante', 'Valor Reembolso', 'Data Solicitação', 'Aprovador', 'Status'];
     rows = [
       { id: '1', field0: 'Hospedagem AWS Training', field1: 'Daniel Lima', field2: 'Engenharia', field3: 'R$ 350,00', field4: '05/07/2026', field5: 'Lucas King', field6: 'Liquidado' },
-      { id: '2', field0: 'Uber visita cliente Vesta', field1: 'Amanda Silva', field2: 'Suporte', field3: 'R$ 45,50', field4: '08/07/2026', field5: 'Mariana Costa', field6: 'Aprovado' }
+      { id: '2', field0: 'Uber visita cliente Life4Billion', field1: 'Amanda Silva', field2: 'Suporte', field3: 'R$ 45,50', field4: '08/07/2026', field5: 'Mariana Costa', field6: 'Aprovado' }
     ];
   } else if (category === 'Documentação' || name.includes('Documentos') || name.includes('Checklist')) {
     cols = ['Nome do Documento / Etapa', 'Tipo de Arquivo', 'Data Upload', 'Validade', 'Obrigatório', 'Status'];
@@ -705,7 +705,7 @@ Fim do Relatório Corporativo
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">E-mail Corporativo</label>
                 <input 
-                  type="email" placeholder="juliana.mendes@vesta.com"
+                  type="email" placeholder="juliana.mendes@life4billion.com"
                   value={empEmail} onChange={(e) => setEmpEmail(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500"
                 />
@@ -1579,7 +1579,7 @@ Fim do Relatório Corporativo
           <div className="max-w-xl">
             <h2 className="text-sm font-bold text-white tracking-tight mb-4 flex items-center">
               <Building className="w-4 h-4 mr-1.5 text-indigo-400" />
-              Editar Dados Tributários Corporativos (ERP Vesta)
+              Editar Dados Tributários Corporativos (ERP Life4Billion)
             </h2>
             <form onSubmit={handleUpdateCompany} className="space-y-4">
               <div>
@@ -1652,7 +1652,7 @@ Fim do Relatório Corporativo
               {/* Company Info */}
               <div className="flex justify-between items-start border-b border-slate-800 pb-3">
                 <div>
-                  <h4 className="font-bold text-white text-sm">{company?.name || 'Vesta Software & IA Ltda'}</h4>
+                  <h4 className="font-bold text-white text-sm">{company?.name || 'Life4Billion Technologies Ltda'}</h4>
                   <p className="text-slate-500 mt-0.5">CNPJ: {company?.tax_id || '45.123.897/0001-22'}</p>
                 </div>
                 <div className="text-right">

@@ -61,21 +61,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let currency = "USD";
   let unitAmount = 1999; // 19.99 in cents
   let priceId = process.env.STRIPE_PRICE_USD || "";
-  let productName = "OmniSaaS Premium Workspace License (English)";
-  let productDesc = "Complete lifetime access to OmniSaaS - Finances, Habits, Goals, and Copilot AI.";
+  let productName = "Life4Billion Premium Workspace License (English)";
+  let productDesc = "Complete lifetime access to Life4Billion - Finances, Habits, Goals, and Copilot AI.";
 
   if (lang === "pt") {
     currency = "BRL";
     unitAmount = 9790; // 97.90 in cents
     priceId = process.env.STRIPE_PRICE_BRL || "";
-    productName = "Licença do Espaço de Trabalho Premium OmniSaaS";
-    productDesc = "Acesso completo vitalício ao ecossistema OmniSaaS - Finanças, Hábitos, Metas, Colaboradores e Copiloto de IA.";
+    productName = "Licença do Espaço de Trabalho Premium Life4Billion";
+    productDesc = "Acesso completo vitalício ao ecossistema Life4Billion - Finanças, Hábitos, Metas, Colaboradores e Copiloto de IA.";
   } else if (lang === "es") {
     currency = "EUR";
     unitAmount = 1999; // 19.99 in cents
     priceId = process.env.STRIPE_PRICE_EUR || "";
-    productName = "Licencia del Espacio de Trabalho Premium OmniSaaS";
-    productDesc = "Acceso completo de por vida a OmniSaaS: finanzas, hábitos, objetivos y Copiloto de IA.";
+    productName = "Licencia del Espacio de Trabalho Premium Life4Billion";
+    productDesc = "Acceso completo de por vida a Life4Billion: finanzas, hábitos, objetivos y Copiloto de IA.";
   }
 
   let hostUrl = process.env.APP_URL;

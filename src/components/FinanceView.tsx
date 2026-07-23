@@ -30,6 +30,7 @@ import { Transaction, Budget } from '../types/schema';
 import { useLanguageTheme, formatCurrency } from '../utils/i18n';
 import PaycheckPlannerView from './PaycheckPlannerView';
 import CategoryDashboard from './CategoryDashboard';
+import CardManagementView from './CardManagementView';
 
 interface FinanceViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
@@ -97,7 +98,7 @@ const DEFAULT_PLANNER_SHEET = (): PlannerSheet => ({
 export default function FinanceView({ onShowNotification }: FinanceViewProps) {
   const { t, language, currency } = useLanguageTheme();
   const currencySymbol = currency === 'BRL' ? 'R$' : currency === 'EUR' ? '€' : '$';
-  const [activeTab, setActiveTab] = useState<'transactions' | 'budgets' | 'excel-budget' | 'planner-universal' | 'paycheck-planner'>('paycheck-planner');
+  const [activeTab, setActiveTab] = useState<'cards' | 'paycheck-planner' | 'transactions' | 'budgets' | 'excel-budget' | 'planner-universal'>('cards');
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -749,7 +750,20 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-850" id="finance-sub-tabs">
+      <div className="flex flex-wrap border-b border-slate-850 gap-1" id="finance-sub-tabs">
+        <button 
+          onClick={() => setActiveTab('cards')}
+          className={`px-5 py-3 text-xs font-bold border-b-2 transition flex items-center space-x-2 ${
+            activeTab === 'cards' 
+              ? 'border-indigo-500 text-indigo-400 bg-indigo-500/5' 
+              : 'border-transparent text-slate-400 hover:text-slate-300'
+          }`}
+          id="tab-btn-cards"
+        >
+          <DollarSign className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Cartões & Faturas (Visa / Master)</span>
+        </button>
+
         <button 
           onClick={() => setActiveTab('transactions')}
           className={`px-5 py-3 text-xs font-bold border-b-2 transition flex items-center space-x-2 ${
@@ -815,6 +829,11 @@ export default function FinanceView({ onShowNotification }: FinanceViewProps) {
           <span>{t('paycheckPlanner', 'Paycheck Planner (IA)')}</span>
         </button>
       </div>
+
+      {/* VIEW 0: CARDS & CREDIT */}
+      {activeTab === 'cards' && (
+        <CardManagementView onShowNotification={onShowNotification} />
+      )}
 
       {/* VIEW 1: TRANSACT FLOW */}
       {activeTab === 'transactions' && (

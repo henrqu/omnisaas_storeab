@@ -4,7 +4,7 @@
  */
 
 export const SUPABASE_SQL_SCHEMA = `-- ====================================================================
--- OMNISAAS POSTGRESQL / SUPABASE PRODUCTION DATABASE SCHEMA
+-- LIFE4BILLION POSTGRESQL / SUPABASE PRODUCTION DATABASE SCHEMA
 -- Projetado para alta performance, integridade referencial e 
 -- isolamento de segurança multi-inquilino (Row-Level Security - RLS).
 -- Pronto para escalar para milhões de usuários.
@@ -47,7 +47,7 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'username', SPLIT_PART(NEW.email, '@', 1)),
-    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Membro OmniSaaS'),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Membro Life4Billion'),
     NEW.raw_user_meta_data->>'avatar_url',
     'owner'
   );

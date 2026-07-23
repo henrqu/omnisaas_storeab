@@ -20,21 +20,41 @@ export interface TranslationDict {
   };
 }
 
+// Flatten nested JSON objects into dot-notated string keys
+const flattenDict = (obj: Record<string, any>, prefix = ''): Record<string, string> => {
+  let res: Record<string, string> = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const p = prefix ? `${prefix}.${key}` : key;
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        Object.assign(res, flattenDict(obj[key], p));
+      } else {
+        res[p] = String(obj[key]);
+      }
+    }
+  }
+  return res;
+};
+
+const flatEnUS = flattenDict(enUS);
+const flatPtBR = flattenDict(ptBR);
+const flatEs = flattenDict(es);
+
 // Dynamically construct and expose translations dictionary from the JSON files
 // to maintain 100% backward compatibility with any legacy imports.
 export const translations: TranslationDict = {};
 
 const allKeys = Array.from(new Set([
-  ...Object.keys(enUS),
-  ...Object.keys(ptBR),
-  ...Object.keys(es)
+  ...Object.keys(flatEnUS),
+  ...Object.keys(flatPtBR),
+  ...Object.keys(flatEs)
 ]));
 
 allKeys.forEach((key) => {
   translations[key] = {
-    en: (enUS as any)[key] || (ptBR as any)[key] || (es as any)[key] || key,
-    pt: (ptBR as any)[key] || (enUS as any)[key] || (es as any)[key] || key,
-    es: (es as any)[key] || (enUS as any)[key] || (ptBR as any)[key] || key,
+    en: flatEnUS[key] || flatPtBR[key] || flatEs[key] || key,
+    pt: flatPtBR[key] || flatEnUS[key] || flatEs[key] || key,
+    es: flatEs[key] || flatEnUS[key] || flatPtBR[key] || key,
   };
 });
 
@@ -72,7 +92,7 @@ export const detectDefaultCurrency = (): Currency => {
 
 // Global format currency helper that reads dynamic preferences from localStorage
 export const formatCurrency = (value: number, langOrCurrency?: string): string => {
-  const currentCurrency = localStorage.getItem('omnisaas_currency') || detectDefaultCurrency();
+  const currentCurrency = localStorage.getItem('life4billion_currency') || localStorage.getItem('omnisaas_currency') || detectDefaultCurrency();
   const locale = getActiveLocale();
   
   try {
@@ -86,7 +106,7 @@ export const formatCurrency = (value: number, langOrCurrency?: string): string =
 
 // Dynamic Date and Time Localization Helpers
 export const getActiveLocale = (): string => {
-  const lang = localStorage.getItem('omnisaas_language') || 'en-US';
+  const lang = localStorage.getItem('life4billion_language') || localStorage.getItem('omnisaas_language') || 'en-US';
   const norm = normalizeLanguage(lang);
   if (norm === 'pt-BR') return 'pt-BR';
   if (norm === 'es') return 'es-ES';

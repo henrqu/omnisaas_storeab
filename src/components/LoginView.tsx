@@ -388,11 +388,11 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
               <div className="text-left space-y-2 text-[11px] text-slate-300 px-1 pt-2">
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Omni ERP Suite</strong>: {language.startsWith('pt') ? 'Hábitos, Metas, Finanças e Contratos' : 'Habits, Goals, Finances & Teams'}</span>
+                  <span><strong>Life4Billion ERP Suite</strong>: {language.startsWith('pt') ? 'Hábitos, Metas, Finanças e Contratos' : 'Habits, Goals, Finances & Teams'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Vesta AI Copilot</strong>: {language.startsWith('pt') ? 'Relatórios Inteligentes Automatizados' : 'Automated Business Intelligence'}</span>
+                  <span><strong>Life4Billion AI Copilot</strong>: {language.startsWith('pt') ? 'Relatórios Inteligentes Automatizados' : 'Automated Business Intelligence'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

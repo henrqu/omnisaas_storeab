@@ -31,16 +31,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { data, error } = await client
-      .from("omnisaas_store")
+    let { data, error } = await client
+      .from("life4billion_store")
       .select("*");
+
+    if (error) {
+      // Fallback check on omnisaas_store for backwards compatibility
+      const fallback = await client.from("omnisaas_store").select("*");
+      if (!fallback.error) {
+        data = fallback.data;
+        error = null;
+      }
+    }
 
     if (error) {
       const isMissingTable = 
         error.code === '42P01' || 
         error.code === 'PGRST116' || 
-        error.message?.toLowerCase().includes('relation "omnisaas_store" does not exist') || 
-        error.message?.toLowerCase().includes('does not exist') ||
+        error.message?.toLowerCase().includes('does not exist') || 
         error.message?.toLowerCase().includes('schema cache') ||
         error.message?.toLowerCase().includes('could not find the table');
 
@@ -48,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({
           success: false,
           needsInitialization: true,
-          error: "A tabela 'omnisaas_store' não existe no banco de dados."
+          error: "A tabela 'life4billion_store' não existe no banco de dados."
         });
       }
       throw error;
