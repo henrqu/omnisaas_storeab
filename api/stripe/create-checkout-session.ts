@@ -40,8 +40,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log("Environment:", process.env.NODE_ENV);
   console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
 
-  const { lang, planId } = req.body || {}; // lang: 'pt'|'es'|'en', planId: 'monthly'|'annual'|'founder'
+  const { lang, planId, priceId, price_id } = req.body || {}; // lang: 'pt'|'es'|'en', planId: 'monthly'|'annual'|'founder', priceId?: string
   const targetPlan = planId || 'annual';
+  const targetLang = (lang === 'pt' || lang === 'es' || lang === 'en') ? lang : 'en';
+
+  // Stripe Price IDs provided for each plan and currency
+  const DEFAULT_STRIPE_PRICES: Record<string, Record<string, string>> = {
+    monthly: {
+      en: "price_1TrfkaQgM79UmffPY33Spfuc", // $19.99 USD
+      es: "price_1TrfnaQgM79UmffPZE43dIsx", // €19.99 EUR
+      pt: "price_1TrfmcQgM79UmffPGSpl0cLV", // R$97.90 BRL
+    },
+    annual: {
+      en: "price_1TwimKQgM79UmffPlbyeMuPI", // $119.88 USD
+      es: "price_1TwinCQgM79UmffPjj7PuFKa", // €118.80 EUR
+      pt: "price_1TwinfQgM79UmffPNdXFOtaa", // R$598.80 BRL
+    },
+    founder: {
+      en: "price_1Twip6QgM79UmffPy9urRCrr", // $99 USD
+      es: "price_1Twiq5QgM79UmffPFo3AqSUB", // €99 EUR
+      pt: "price_1Twir1QgM79UmffPAsh0E1LA", // R$497 BRL
+    }
+  };
+
+  // Resolve Stripe Price ID
+  let stripePriceId = priceId || price_id;
+  if (!stripePriceId) {
+    if (targetPlan === 'founder' && process.env.STRIPE_PRICE_FOUNDER) {
+      stripePriceId = process.env.STRIPE_PRICE_FOUNDER;
+    } else if (targetPlan === 'annual' && process.env.STRIPE_PRICE_ANNUAL) {
+      stripePriceId = process.env.STRIPE_PRICE_ANNUAL;
+    } else if (targetPlan === 'monthly' && process.env.STRIPE_PRICE_MONTHLY) {
+      stripePriceId = process.env.STRIPE_PRICE_MONTHLY;
+    } else if (process.env.STRIPE_PRICE_ID) {
+      stripePriceId = process.env.STRIPE_PRICE_ID;
+    } else {
+      stripePriceId = DEFAULT_STRIPE_PRICES[targetPlan]?.[targetLang] || DEFAULT_STRIPE_PRICES[targetPlan]?.['en'];
+    }
+  }
 
   // Check founder spots if founder plan requested
   const spotInfo = getFounderSpots();
@@ -155,25 +191,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const lineItems = stripePriceId
+      ? [{ price: stripePriceId, quantity: 1 }]
+      : [
+          {
+            price_data: {
+              currency: currency.toLowerCase(),
+              product_data: {
+                name: productName,
+                description: productDesc,
+              },
+              unit_amount: unitAmount,
+              ...(mode === "subscription" && recurringInterval ? { recurring: { interval: recurringInterval } } : {}),
+            },
+            quantity: 1,
+          },
+        ];
+
     const sessionParam: any = {
       payment_method_types: ["card"],
       mode: mode,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      line_items: [
-        {
-          price_data: {
-            currency: currency.toLowerCase(),
-            product_data: {
-              name: productName,
-              description: productDesc,
-            },
-            unit_amount: unitAmount,
-            ...(mode === "subscription" && recurringInterval ? { recurring: { interval: recurringInterval } } : {}),
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
     };
 
     const session = await stripe.checkout.sessions.create(sessionParam);
