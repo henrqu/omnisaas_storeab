@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { getFounderSpots } from "../pricing/_spots";
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   // CORS Configuration
@@ -24,20 +25,32 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   console.log("Environment:", process.env.NODE_ENV);
   console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return res.status(500).json({
-      success: false,
-      error: "Missing STRIPE_SECRET_KEY environment variable."
-    });
-  }
+  const isConfigured = !!process.env.STRIPE_SECRET_KEY;
+  const spots = getFounderSpots();
 
   return res.status(200).json({
     success: true,
-    isConfigured: true,
+    isConfigured,
+    founderSpots: {
+      remaining: spots.remaining,
+      total: spots.total
+    },
     prices: {
-      en: { currency: "USD", amount: 19.99, priceId: process.env.STRIPE_PRICE_USD || "" },
-      es: { currency: "EUR", amount: 19.99, priceId: process.env.STRIPE_PRICE_EUR || "" },
-      pt: { currency: "BRL", amount: 97.90, priceId: process.env.STRIPE_PRICE_BRL || "" }
+      en: {
+        monthly: { currency: "USD", amount: 19.99 },
+        annual: { currency: "USD", amount: 119.88, monthlyEquivalent: 9.99 },
+        founder: { currency: "USD", amount: 99.00 }
+      },
+      es: {
+        monthly: { currency: "EUR", amount: 19.99 },
+        annual: { currency: "EUR", amount: 118.80, monthlyEquivalent: 9.90 },
+        founder: { currency: "EUR", amount: 99.00 }
+      },
+      pt: {
+        monthly: { currency: "BRL", amount: 97.90 },
+        annual: { currency: "BRL", amount: 598.80, monthlyEquivalent: 49.90 },
+        founder: { currency: "BRL", amount: 497.00 }
+      }
     }
   });
 }
