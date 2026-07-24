@@ -17,7 +17,6 @@ import {
 } from 'recharts';
 import { Transaction, Goal, Debt } from '../../types/schema';
 import { useTranslation, formatCurrency } from '../../utils/i18n';
-import logoImg from '../../assets/images/logo.png';
 
 interface ExecutiveOverviewProps {
   transactions?: Transaction[];
@@ -97,20 +96,9 @@ export const ExecutiveOverviewDashboard: React.FC<ExecutiveOverviewProps> = () =
       id="executive-overview-dashboard"
     >
       
-      {/* 1. HEADER SECTION WITH LOGO AND TITLE */}
+      {/* 1. HEADER SECTION */}
       <div className={`flex flex-wrap items-center justify-between gap-4 pb-3 border-b ${isLight ? 'border-slate-200' : 'border-emerald-950/80'}`}>
         <div className="flex items-center space-x-3">
-          {/* Logo asset PNG with fallbacks */}
-          <img 
-            src={logoImg} 
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/assets/images/logo.png';
-            }}
-            alt="Life4Billion" 
-            referrerPolicy="no-referrer"
-            className="h-10 md:h-12 w-auto object-contain select-none"
-          />
-          <span className={`${isLight ? 'text-slate-300' : 'text-slate-600'} font-light text-2xl select-none`}>|</span>
           <div className="flex items-center space-x-2">
             <h1 className={`${isLight ? 'text-slate-900' : 'text-white'} font-extrabold text-lg md:text-2xl tracking-widest uppercase`}>
               {t('executiveTitle', 'DASHBOARD')}
@@ -347,19 +335,6 @@ export const ExecutiveOverviewDashboard: React.FC<ExecutiveOverviewProps> = () =
           </div>
         </div>
 
-      </div>
-
-      {/* 5. FOOTER LOGO */}
-      <div className="flex justify-end pt-2">
-        <img 
-          src={logoImg} 
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = '/assets/images/logo.png';
-          }}
-          alt="Life4Billion Logo" 
-          referrerPolicy="no-referrer"
-          className="h-8 md:h-10 w-auto object-contain select-none opacity-90 hover:opacity-100 transition"
-        />
       </div>
 
     </div>

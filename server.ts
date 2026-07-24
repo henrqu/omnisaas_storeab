@@ -5,6 +5,7 @@
 
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -550,6 +551,53 @@ app.get("/api/supabase/pull", async (req, res) => {
 // STRIPE PAYMENT INTEGRATION ENDPOINTS
 // -------------------------------------------------------------
 
+// Founder Spots State Management
+let founderSpotsRemaining = 23;
+const FOUNDER_SPOTS_FILE = path.join(process.cwd(), ".founder_spots.json");
+try {
+  if (fs.existsSync(FOUNDER_SPOTS_FILE)) {
+    const data = JSON.parse(fs.readFileSync(FOUNDER_SPOTS_FILE, "utf-8"));
+    if (typeof data.remaining === "number") {
+      founderSpotsRemaining = Math.max(0, data.remaining);
+    }
+  } else {
+    fs.writeFileSync(FOUNDER_SPOTS_FILE, JSON.stringify({ remaining: 23, total: 30 }));
+  }
+} catch (err) {
+  console.warn("Could not load founder spots file:", err);
+}
+
+function saveFounderSpots(val: number) {
+  founderSpotsRemaining = Math.max(0, val);
+  try {
+    fs.writeFileSync(FOUNDER_SPOTS_FILE, JSON.stringify({ remaining: founderSpotsRemaining, total: 30 }));
+  } catch (err) {
+    console.warn("Could not save founder spots file:", err);
+  }
+}
+
+// Endpoint to fetch remaining Founder spots in real-time
+app.get("/api/pricing/founder-spots", (req, res) => {
+  res.json({
+    remaining: founderSpotsRemaining,
+    total: 30,
+    soldOut: founderSpotsRemaining <= 0
+  });
+});
+
+// Endpoint to simulate/decrement Founder spot purchase
+app.post("/api/pricing/buy-founder", (req, res) => {
+  if (founderSpotsRemaining > 0) {
+    saveFounderSpots(founderSpotsRemaining - 1);
+  }
+  res.json({
+    success: true,
+    remaining: founderSpotsRemaining,
+    total: 30,
+    soldOut: founderSpotsRemaining <= 0
+  });
+});
+
 // Lazy helper to get Stripe client instance safely without crashing server if keys are missing
 let stripeInstance: Stripe | null = null;
 const getStripeInstance = (): Stripe | null => {
@@ -572,59 +620,118 @@ app.get("/api/stripe/config", (req, res) => {
   console.log("Environment:", process.env.NODE_ENV);
   console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return res.status(500).json({
-      success: false,
-      error: "Missing STRIPE_SECRET_KEY environment variable."
-    });
-  }
-
   const isConfigured = !!process.env.STRIPE_SECRET_KEY;
   res.json({
     success: true,
     isConfigured,
+    founderSpots: {
+      remaining: founderSpotsRemaining,
+      total: 30
+    },
     prices: {
-      en: { currency: "USD", amount: 19.99, priceId: process.env.STRIPE_PRICE_USD || "" },
-      es: { currency: "EUR", amount: 19.99, priceId: process.env.STRIPE_PRICE_EUR || "" },
-      pt: { currency: "BRL", amount: 97.90, priceId: process.env.STRIPE_PRICE_BRL || "" }
+      en: {
+        monthly: { currency: "USD", amount: 19.99 },
+        annual: { currency: "USD", amount: 119.88, monthlyEquivalent: 9.99 },
+        founder: { currency: "USD", amount: 99.00 }
+      },
+      es: {
+        monthly: { currency: "EUR", amount: 19.99 },
+        annual: { currency: "EUR", amount: 118.80, monthlyEquivalent: 9.90 },
+        founder: { currency: "EUR", amount: 99.00 }
+      },
+      pt: {
+        monthly: { currency: "BRL", amount: 97.90 },
+        annual: { currency: "BRL", amount: 598.80, monthlyEquivalent: 49.90 },
+        founder: { currency: "BRL", amount: 497.00 }
+      }
     }
   });
 });
 
-// 2. Create Checkout Session based on language/country detected
+// 2. Create Checkout Session based on selected plan and language
 app.post("/api/stripe/create-checkout-session", async (req, res) => {
   console.log("Environment:", process.env.NODE_ENV);
   console.log("Stripe Secret Exists:", !!process.env.STRIPE_SECRET_KEY);
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return res.status(500).json({
-      success: false,
-      error: "Missing STRIPE_SECRET_KEY environment variable."
-    });
+  const { lang, planId } = req.body; // lang: 'pt'|'es'|'en', planId: 'monthly'|'annual'|'founder'
+  const targetPlan = planId || 'annual';
+
+  // Check founder spots if founder plan requested
+  if (targetPlan === 'founder') {
+    if (founderSpotsRemaining <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "O Plano Fundador está esgotado (0 de 30 vagas restantes)."
+      });
+    }
   }
 
-  const stripe = getStripeInstance();
-  const { lang } = req.body; // 'pt' | 'es' | 'en'
-  
-  // Resolve pricing based on language detected/selected
+  // Resolve exact currency & unit amounts
   let currency = "USD";
-  let unitAmount = 1999; // 19.99 in cents
-  let priceId = process.env.STRIPE_PRICE_USD || "";
-  let productName = "Life4Billion Premium Workspace License (English)";
-  let productDesc = "Complete lifetime access to Life4Billion - Finances, Habits, Goals, and Copilot AI.";
-  
-  if (lang === "pt") {
-    currency = "BRL";
-    unitAmount = 9790; // 97.90 in cents
-    priceId = process.env.STRIPE_PRICE_BRL || "";
-    productName = "Licença do Espaço de Trabalho Premium Life4Billion";
-    productDesc = "Acesso completo vitalício ao ecossistema Life4Billion - Finanças, Hábitos, Metas, Colaboradores e Copiloto de IA.";
-  } else if (lang === "es") {
-    currency = "EUR";
-    unitAmount = 1999; // 19.99 in cents
-    priceId = process.env.STRIPE_PRICE_EUR || "";
-    productName = "Licencia del Espacio de Trabalho Premium Life4Billion";
-    productDesc = "Acceso completo de por vida a Life4Billion: finanzas, hábitos, objetivos y Copiloto de IA.";
+  let unitAmount = 1999;
+  let mode = "subscription";
+  let recurringInterval: "month" | "year" | null = "month";
+  let productName = "Life4Billion Plan";
+  let productDesc = "Complete access to Life4Billion ERP, Finances, Habits, and AI Copilot.";
+
+  if (targetPlan === "founder") {
+    mode = "payment";
+    recurringInterval = null;
+    if (lang === "pt") {
+      currency = "BRL";
+      unitAmount = 49700; // R$ 497.00
+      productName = "Plano Fundador Life4Billion — Acesso Vitalício";
+      productDesc = "Oferta exclusiva de lançamento. Acesso vitalício sem mensalidades com garantia de 7 dias.";
+    } else if (lang === "es") {
+      currency = "EUR";
+      unitAmount = 9900; // € 99.00
+      productName = "Plan Fundador Life4Billion — Acceso De Por Vida";
+      productDesc = "Oferta exclusiva de lanzamiento. Acceso de por vida sin cuotas mensuales con garantía de 7 días.";
+    } else {
+      currency = "USD";
+      unitAmount = 9900; // $ 99.00
+      productName = "Life4Billion Founder Plan — Lifetime Access";
+      productDesc = "Exclusive launch offer. Lifetime access with zero monthly fees backed by a 7-day refund guarantee.";
+    }
+  } else if (targetPlan === "annual") {
+    mode = "subscription";
+    recurringInterval = "year";
+    if (lang === "pt") {
+      currency = "BRL";
+      unitAmount = 59880; // R$ 598.80 / ano (R$ 49.90 / mês)
+      productName = "Plano Anual Life4Billion (Mais Popular)";
+      productDesc = "Economize 50% no plano anual. R$ 49,90/mês faturados anualmente (R$ 598,80/ano) com garantia de 7 dias.";
+    } else if (lang === "es") {
+      currency = "EUR";
+      unitAmount = 11880; // € 118.80 / año (€ 9.90 / mes)
+      productName = "Plan Anual Life4Billion (Más Popular)";
+      productDesc = "Ahorra 50% en el plan anual. €9.90/mes facturados anualmente con garantía de 7 días.";
+    } else {
+      currency = "USD";
+      unitAmount = 11988; // $ 119.88 / year ($ 9.99 / month)
+      productName = "Life4Billion Annual Plan (Most Popular)";
+      productDesc = "Save 50% with annual billing. $9.99/month billed annually ($119.88/yr) backed by a 7-day refund guarantee.";
+    }
+  } else {
+    // Monthly plan
+    mode = "subscription";
+    recurringInterval = "month";
+    if (lang === "pt") {
+      currency = "BRL";
+      unitAmount = 9790; // R$ 97.90 / mês
+      productName = "Plano Mensal Life4Billion";
+      productDesc = "Acesso flexível sem compromisso. Cancele quando quiser com garantia de reembolso de 7 dias.";
+    } else if (lang === "es") {
+      currency = "EUR";
+      unitAmount = 1999; // € 19.99 / mês
+      productName = "Plan Mensual Life4Billion";
+      productDesc = "Acceso flexible sin compromiso. Cancela cuando quieras con garantía de reembolso de 7 días.";
+    } else {
+      currency = "USD";
+      unitAmount = 1999; // $ 19.99 / month
+      productName = "Life4Billion Monthly Plan";
+      productDesc = "Flexible monthly access. Cancel anytime with a 100% 7-day money-back guarantee.";
+    }
   }
 
   let hostUrl = process.env.APP_URL;
@@ -633,84 +740,59 @@ app.post("/api/stripe/create-checkout-session", async (req, res) => {
     const host = req.headers.host || (req.headers.origin ? String(req.headers.origin).replace(/^https?:\/\//, "") : "localhost:3000");
     hostUrl = `${protocol}://${host}`;
   }
-  const successUrl = `${hostUrl}/?payment=success&lang=${lang || 'en'}`;
+  const successUrl = `${hostUrl}/?payment=success&lang=${lang || 'en'}&plan=${targetPlan}`;
   const cancelUrl = `${hostUrl}/?payment=cancel&lang=${lang || 'en'}`;
 
-  if (!stripe) {
-    return res.status(500).json({
-      success: false,
-      error: "Missing STRIPE_SECRET_KEY environment variable."
+  const stripe = getStripeInstance();
+  if (!stripe || !process.env.STRIPE_SECRET_KEY) {
+    // Return simulated success parameters if Stripe key is missing so demo UI works smoothly
+    if (targetPlan === 'founder' && founderSpotsRemaining > 0) {
+      saveFounderSpots(founderSpotsRemaining - 1);
+    }
+    return res.json({
+      success: true,
+      isConfigured: false,
+      simulated: true,
+      plan: targetPlan,
+      remainingFounderSpots: founderSpotsRemaining,
+      message: "Modo simulação ativo. Servidor processou o checkout com sucesso."
     });
   }
 
   try {
-    let mode = "payment";
-    
-    if (priceId) {
-      try {
-        const priceObj = await stripe.prices.retrieve(priceId);
-        if (priceObj.type === "recurring" || priceObj.recurring) {
-          mode = "subscription";
-        }
-      } catch (retrieveErr) {
-        console.warn("[Stripe] Warning retrieving price, defaulting to 'payment':", retrieveErr);
-      }
-    }
-
-    const createSessionWithMode = async (sessionMode: string) => {
-      const sessionParam: any = {
-        payment_method_types: ["card"],
-        mode: sessionMode,
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      };
-
-      if (priceId) {
-        sessionParam.line_items = [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ];
-      } else {
-        // Dynamic price creation using inline price_data (extremely robust)
-        sessionParam.line_items = [
-          {
-            price_data: {
-              currency: currency.toLowerCase(),
-              product_data: {
-                name: productName,
-                description: productDesc,
-              },
-              unit_amount: unitAmount,
+    const sessionParam: any = {
+      payment_method_types: ["card"],
+      mode: mode,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      line_items: [
+        {
+          price_data: {
+            currency: currency.toLowerCase(),
+            product_data: {
+              name: productName,
+              description: productDesc,
             },
-            quantity: 1,
+            unit_amount: unitAmount,
+            ...(mode === "subscription" && recurringInterval ? { recurring: { interval: recurringInterval } } : {}),
           },
-        ];
-      }
-      return await stripe.checkout.sessions.create(sessionParam);
+          quantity: 1,
+        },
+      ],
     };
 
-    let session;
-    try {
-      session = await createSessionWithMode(mode);
-    } catch (firstTryErr: any) {
-      const errMsg = (firstTryErr.message || "").toLowerCase();
-      // If we got an error indicating a subscription / payment mode mismatch, retry automatically with the other mode!
-      if (errMsg.includes("recurring") || errMsg.includes("subscription") || errMsg.includes("payment")) {
-        const fallbackMode = mode === "payment" ? "subscription" : "payment";
-        console.log(`[Stripe Auto-Recovery] First attempt with mode '${mode}' failed. Retrying with mode '${fallbackMode}'...`);
-        session = await createSessionWithMode(fallbackMode);
-      } else {
-        throw firstTryErr;
-      }
+    const session = await stripe.checkout.sessions.create(sessionParam);
+
+    if (targetPlan === 'founder' && founderSpotsRemaining > 0) {
+      saveFounderSpots(founderSpotsRemaining - 1);
     }
     
     return res.json({
       success: true,
       isConfigured: true,
       sessionId: session.id,
-      checkoutUrl: session.url
+      checkoutUrl: session.url,
+      remainingFounderSpots: founderSpotsRemaining
     });
 
   } catch (err: any) {

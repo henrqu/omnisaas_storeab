@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, Phone, Eye, EyeOff, Sparkles, LogIn, ArrowRight, CreditCard, Globe, CheckCircle2, AlertCircle, RefreshCw, X, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, Sparkles, LogIn, ArrowRight, CreditCard, Globe, CheckCircle2, AlertCircle, RefreshCw, X, ShieldCheck, Flame, ShieldAlert, Award } from 'lucide-react';
 import OmniSaaSLogo from './OmniSaaSLogo';
 import { useLanguageTheme, Language } from '../utils/i18n';
+import { getPricingPlans, PlanPricing } from '../utils/pricing';
 
 interface LoginViewProps {
   onLogin: (email: string, provider: 'email' | 'google', fullName?: string, phone?: string) => void;
@@ -10,6 +11,10 @@ interface LoginViewProps {
 
 export default function LoginView({ onLogin, onShowNotification }: LoginViewProps) {
   const { language, setLanguage, t } = useLanguageTheme();
+
+  // Pricing & Founder Spots States
+  const [selectedPlanId, setSelectedPlanId] = useState<'monthly' | 'annual' | 'founder'>('annual');
+  const [founderSpotsRemaining, setFounderSpotsRemaining] = useState<number>(23);
   
   // App credentials states
   const [email, setEmail] = useState(() => localStorage.getItem('omnisaas_remembered_email') || '');
@@ -55,26 +60,39 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
   const [cardCvcVal, setCardCvcVal] = useState('');
   const [isSimulatingTransaction, setIsSimulatingTransaction] = useState(false);
 
-  // Check backend Stripe setup
+  // Check backend Stripe setup & Founder spots
   useEffect(() => {
-    const fetchStripeConfig = async () => {
+    const fetchPricingAndConfig = async () => {
       try {
-        const res = await fetch('/api/stripe/config');
-        const contentType = res.headers.get('content-type');
-        if (!res.ok || !contentType || !contentType.includes('application/json')) {
+        const [configRes, spotsRes] = await Promise.all([
+          fetch('/api/stripe/config').catch(() => null),
+          fetch('/api/pricing/founder-spots').catch(() => null)
+        ]);
+
+        if (configRes && configRes.ok) {
+          const data = await configRes.json();
+          setStripeConfig(data);
+          if (data?.founderSpots?.remaining !== undefined) {
+            setFounderSpotsRemaining(data.founderSpots.remaining);
+          }
+        } else {
           setStripeConfig({ isConfigured: false });
-          return;
         }
-        const data = await res.json();
-        setStripeConfig(data);
+
+        if (spotsRes && spotsRes.ok) {
+          const spotsData = await spotsRes.json();
+          if (typeof spotsData.remaining === 'number') {
+            setFounderSpotsRemaining(spotsData.remaining);
+          }
+        }
       } catch (err) {
-        console.error('Error fetching stripe config:', err);
+        console.error('Error fetching pricing config:', err);
         setStripeConfig({ isConfigured: false });
       } finally {
         setIsCheckingConfig(false);
       }
     };
-    fetchStripeConfig();
+    fetchPricingAndConfig();
   }, []);
 
   // Format Card Number (adds spaces every 4 digits)
@@ -103,8 +121,9 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
     setCardCvcVal(clean);
   };
 
-  const handleCheckoutSubmit = async () => {
+  const handleCheckoutSubmit = async (overridePlanId?: 'monthly' | 'annual' | 'founder') => {
     setIsCreatingSession(true);
+    const targetPlan = overridePlanId || selectedPlanId;
     
     const isProduction = window.location.hostname !== 'localhost' && 
                          window.location.hostname !== '127.0.0.1' && 
@@ -114,7 +133,7 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
       const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: language })
+        body: JSON.stringify({ lang: language, planId: targetPlan })
       });
       
       const contentType = res.headers.get('content-type');
@@ -126,22 +145,34 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           console.error("Error parsing response JSON:", jsonErr);
         }
       }
+
+      if (data?.remainingFounderSpots !== undefined) {
+        setFounderSpotsRemaining(data.remainingFounderSpots);
+      }
       
       if (res.ok && data && data.success && data.checkoutUrl) {
         // Redireciona para o checkout real da Stripe
         onShowNotification('Stripe Checkout', 'Redirecionando para página de pagamento seguro...', 'info');
         
-        // Se estiver dentro de um iframe (como no preview do AI Studio), abre em uma nova aba/janela
-        // para evitar bloqueios de Frame (X-Frame-Options: DENY) que resultariam em tela branca.
         if (window.self !== window.top) {
           const newWindow = window.open(data.checkoutUrl, '_blank');
           if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-            // Se o bloqueador de popups interceptar, redireciona o frame pai ou atual
             window.location.href = data.checkoutUrl;
           }
         } else {
           window.location.href = data.checkoutUrl;
         }
+      } else if (data && data.simulated) {
+        // Sandbox fallback
+        if (targetPlan === 'founder' && founderSpotsRemaining > 0) {
+          setFounderSpotsRemaining(prev => Math.max(0, prev - 1));
+        }
+        setShowSimulationForm(true);
+        onShowNotification(
+          t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
+          'Iniciando formulário seguro de pagamento simulado Stripe.',
+          'info'
+        );
       } else {
         const errorMsg = data?.error || data?.message || (language.startsWith('pt') ? 'Erro ao iniciar o checkout seguro do Stripe.' : 'Error starting secure Stripe checkout.');
         
@@ -152,7 +183,6 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
             'warning'
           );
         } else {
-          // Se a Stripe não estiver configurada no servidor, abrir simulador local de pagamento
           setShowSimulationForm(true);
           onShowNotification(
             t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
@@ -171,7 +201,6 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
           'warning'
         );
       } else {
-        // In case of any network/parsing failure, show the simulation form so they are not blocked!
         setShowSimulationForm(true);
         onShowNotification(
           t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium'),
@@ -350,63 +379,128 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-slate-900/45 backdrop-blur-md border border-slate-800/80 rounded-3xl p-8 shadow-2xl relative z-10 space-y-6" id="login-card">
+      <div className={`w-full ${!isPaid ? 'max-w-4xl' : 'max-w-md'} bg-slate-900/50 backdrop-blur-md border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6 transition-all duration-300`} id="login-card">
         
         {/* Logo and Brand */}
         <div className="flex flex-col items-center justify-center text-center space-y-2">
           <OmniSaaSLogo size="lg" className="justify-center" />
-          <p className="text-slate-400 text-xs mt-2 max-w-xs">
+          <p className="text-slate-400 text-xs mt-1 max-w-xs">
             {t('stripeDetectedLanguage', 'Preço e moeda adaptados automaticamente para o idioma detectado.')}
           </p>
         </div>
 
         {/* STEP 1: PAYMENT (STILL NOT PAID) */}
         {!isPaid ? (
-          <div className="space-y-5 animate-fade-in" id="stripe-checkout-section">
-            <div className="p-4 bg-indigo-950/15 border border-indigo-500/20 rounded-2xl space-y-3 text-center">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-widest font-mono">
-                Stripe Premium Checkout
-              </span>
-              <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
-                {t('stripeCheckoutTitle', 'Ativação do Espaço de Trabalho Premium')}
-              </h2>
-              <p className="text-[11px] text-slate-400 leading-normal">
-                {t('stripeCheckoutDesc', 'Antes de poder se inscrever ou entrar, você deve efetuar o pagamento. A plataforma completa de ERP, Finanças, Hábitos e Copiloto Inteligente requer uma licença ativa.')}
-              </p>
-
-              {/* Glowing Localized Pricing Display */}
-              <div className="py-4 bg-black/40 border border-slate-800/40 rounded-xl space-y-1 my-3">
-                <span className="text-3xl font-black text-white tracking-tight drop-shadow-lg font-sans">
-                  {priceDetails.value}
+          <div className="space-y-6 animate-fade-in" id="stripe-checkout-section">
+            
+            {/* Guarantee Badge Banner */}
+            <div className="bg-gradient-to-r from-emerald-950/40 via-emerald-900/20 to-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 text-center space-y-1">
+              <div className="flex items-center justify-center space-x-2 text-emerald-400">
+                <ShieldCheck className="w-5 h-5 shrink-0" />
+                <span className="text-xs font-black uppercase tracking-wider">
+                  {language.startsWith('pt') ? 'Garantia Incondicional de Reembolso de 7 Dias' : language.startsWith('es') ? 'Garantía Incondicional de Reembolso de 7 Días' : '7-Day 100% Money-Back Guarantee'}
                 </span>
-                <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">
-                  {priceDetails.code} — {t('activeLicense', 'Acesso Vitalício')}
-                </p>
               </div>
-
-              {/* Value Propositions */}
-              <div className="text-left space-y-2 text-[11px] text-slate-300 px-1 pt-2">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Life4Billion ERP Suite</strong>: {language.startsWith('pt') ? 'Hábitos, Metas, Finanças e Contratos' : 'Habits, Goals, Finances & Teams'}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Life4Billion AI Copilot</strong>: {language.startsWith('pt') ? 'Relatórios Inteligentes Automatizados' : 'Automated Business Intelligence'}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span><strong>Supabase Cloud Sync</strong>: {language.startsWith('pt') ? 'Salvamento de segurança RLS integrado' : 'Bidirectional secure RLS saving'}</span>
-                </div>
-              </div>
+              <p className="text-[11px] text-slate-300 leading-snug max-w-xl mx-auto">
+                {language.startsWith('pt') 
+                  ? 'Cobrança imediata no checkout. Se não gostar da plataforma nos primeiros 7 dias, devolvemos 100% do seu dinheiro sem perguntas.' 
+                  : language.startsWith('es')
+                  ? 'Cobro inmediato en el checkout. Si no te gusta en los primeros 7 días, te devolvemos el 100% sin preguntas.'
+                  : 'All plans charged immediately upon checkout. If you are not satisfied within 7 days, get a 100% full refund with no questions asked.'}
+              </p>
             </div>
 
-            {/* Standard Payment Button */}
+            {/* Plans Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {getPricingPlans(language, founderSpotsRemaining).map((plan) => {
+                const isSelected = selectedPlanId === plan.id;
+                return (
+                  <div
+                    key={plan.id}
+                    onClick={() => setSelectedPlanId(plan.id)}
+                    className={`relative rounded-2xl p-5 border cursor-pointer transition-all flex flex-col justify-between ${
+                      isSelected
+                        ? plan.popular
+                          ? 'bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/50 shadow-xl shadow-indigo-500/10'
+                          : plan.id === 'founder'
+                          ? 'bg-amber-950/30 border-amber-500 ring-2 ring-amber-500/50 shadow-xl shadow-amber-500/10'
+                          : 'bg-slate-900 border-slate-500 ring-1 ring-slate-400'
+                        : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
+                    }`}
+                  >
+                    {/* Badge */}
+                    {plan.badge && (
+                      <div className="mb-2">
+                        <span className={`inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                          plan.popular 
+                            ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                            : plan.id === 'founder'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse'
+                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                        }`}>
+                          {plan.id === 'founder' && <Flame className="w-3 h-3 mr-1 text-amber-400" />}
+                          {plan.badge}
+                        </span>
+                      </div>
+                    )}
+
+                    <div>
+                      <h3 className="text-sm font-black text-white">{plan.name}</h3>
+                      
+                      {/* Price Display */}
+                      <div className="mt-2 mb-1">
+                        <span className="text-2xl font-black text-white tracking-tight font-sans">
+                          {plan.priceDisplay}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium ml-1">
+                          {plan.subText}
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 leading-snug mb-3">
+                        {plan.billingDetail}
+                      </p>
+
+                      <ul className="space-y-1.5 pt-3 border-t border-slate-800/80 text-[10.5px] text-slate-300">
+                        {plan.features.map((feat, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mr-1.5 mt-0.5" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPlanId(plan.id);
+                        handleCheckoutSubmit(plan.id);
+                      }}
+                      disabled={isCreatingSession}
+                      className={`w-full mt-5 py-2.5 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+                        plan.popular
+                          ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                          : plan.id === 'founder'
+                          ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 font-black'
+                          : 'bg-slate-800 hover:bg-slate-700 text-white'
+                      }`}
+                    >
+                      <span>{language.startsWith('pt') ? 'Assinar Este Plano' : language.startsWith('es') ? 'Seleccionar Plan' : 'Select Plan'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Main Primary Action Button */}
             {!showSimulationForm ? (
-              <div className="space-y-3">
+              <div className="space-y-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleCheckoutSubmit}
+                  onClick={() => handleCheckoutSubmit(selectedPlanId)}
                   disabled={isCreatingSession}
                   className="w-full bg-emerald-500 hover:bg-emerald-450 text-black font-black text-xs py-3.5 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-500/10 cursor-pointer"
                   id="stripe-trigger-btn"
@@ -416,7 +510,13 @@ export default function LoginView({ onLogin, onShowNotification }: LoginViewProp
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4" />
-                      <span>{t('stripePayNowBtn', 'Efetuar Pagamento Seguro com Stripe')}</span>
+                      <span>
+                        {language.startsWith('pt')
+                          ? `Ir para Checkout Seguro (${selectedPlanId === 'monthly' ? 'Plano Mensal' : selectedPlanId === 'founder' ? 'Plano Fundador' : 'Plano Anual'})`
+                          : language.startsWith('es')
+                          ? `Ir al Checkout Seguro (${selectedPlanId === 'monthly' ? 'Plan Mensual' : selectedPlanId === 'founder' ? 'Plan Fundador' : 'Plan Anual'})`
+                          : `Proceed to Checkout (${selectedPlanId === 'monthly' ? 'Monthly Plan' : selectedPlanId === 'founder' ? 'Founder Plan' : 'Annual Plan'})`}
+                      </span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}

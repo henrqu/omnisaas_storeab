@@ -10,11 +10,15 @@ import {
   CheckCircle, 
   Crown,
   Lock,
-  Cpu
+  ShieldCheck,
+  CheckCircle2,
+  Flame,
+  ArrowRight
 } from 'lucide-react';
 import { LocalDatabase } from '../utils/db';
 import { Profile, Subscription } from '../types/schema';
 import { useLanguageTheme, formatCurrency } from '../utils/i18n';
+import { getPricingPlans, PlanPricing } from '../utils/pricing';
 
 interface SubscriptionProfileViewProps {
   onShowNotification: (title: string, message: string, type: 'success' | 'warning' | 'info') => void;
@@ -29,9 +33,10 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
   const [fullName, setFullName] = useState('');
   const [avatar, setAvatar] = useState('');
 
-  // Stripe Simulation States
+  // Pricing & Founder Spots States
+  const [founderSpotsRemaining, setFounderSpotsRemaining] = useState<number>(23);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<'free' | 'pro' | 'enterprise' | null>(null);
+  const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
 
   useEffect(() => {
     setProfile(LocalDatabase.getProfile());
@@ -42,6 +47,16 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
       setFullName(prof.full_name);
       setAvatar(prof.avatar_url);
     }
+
+    // Fetch real-time founder spots
+    fetch('/api/pricing/founder-spots')
+      .then(res => res.json())
+      .then(data => {
+        if (typeof data?.remaining === 'number') {
+          setFounderSpotsRemaining(data.remaining);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleUpdateProfile = (e: React.FormEvent) => {
@@ -60,63 +75,66 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
     onShowNotification('Configurações Salvas', 'Preferências de perfil armazenadas com sucesso.', 'success');
   };
 
-  const handleSimulateStripeCheckout = (plan: 'free' | 'pro' | 'enterprise') => {
-    const isAlreadyActive = 
-      (plan === 'free' && sub?.tier_name === 'Free') ||
-      (plan === 'pro' && sub?.tier_name === 'Pro Plan') ||
-      (plan === 'enterprise' && sub?.tier_name === 'Enterprise');
-
-    if (isAlreadyActive) {
-      onShowNotification('Aviso', `Você já possui o plano ${plan.toUpperCase()} ativo.`, 'info');
-      return;
-    }
-
-    setCheckoutPlan(plan);
+  const handlePlanCheckout = async (plan: PlanPricing) => {
     setIsCheckoutLoading(true);
+    setCheckoutPlanId(plan.id);
 
-    // Simulate Stripe payment gateway latency
-    setTimeout(() => {
-      let mappedTierName: 'Free' | 'Pro Plan' | 'Enterprise' = 'Free';
-      let priceId = 'price_stripe_free';
-
-      if (plan === 'pro') {
-        mappedTierName = 'Pro Plan';
-        priceId = 'price_stripe_pro';
-      } else if (plan === 'enterprise') {
-        mappedTierName = 'Enterprise';
-        priceId = 'price_stripe_enterprise';
-      }
-
-      const updatedSub = LocalDatabase.updateSubscription({
-        tier_name: mappedTierName,
-        status: plan === 'free' ? 'trialing' : 'active',
-        price_id: priceId
+    try {
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lang: language, planId: plan.id })
       });
 
-      setSub(updatedSub);
+      const data = await res.json().catch(() => null);
+
+      if (data?.remainingFounderSpots !== undefined) {
+        setFounderSpotsRemaining(data.remainingFounderSpots);
+      }
+
+      if (res.ok && data && data.success && data.checkoutUrl) {
+        onShowNotification('Stripe Checkout', 'Redirecionando para checkout seguro...', 'info');
+        if (window.self !== window.top) {
+          window.open(data.checkoutUrl, '_blank');
+        } else {
+          window.location.href = data.checkoutUrl;
+        }
+      } else {
+        // Fallback local update for demonstration/offline
+        let mappedTierName: 'Pro Plan' | 'Enterprise' | 'Free' = 'Pro Plan';
+        if (plan.id === 'founder') {
+          mappedTierName = 'Enterprise';
+        }
+
+        const updatedSub = LocalDatabase.updateSubscription({
+          tier_name: mappedTierName,
+          status: 'active',
+          price_id: `price_${plan.id}`
+        });
+
+        setSub(updatedSub);
+        onShowNotification(
+          'Plano Atualizado ✅',
+          `Plano ${plan.name} ativado com sucesso. Garantia de reembolso de 7 dias disponível.`,
+          'success'
+        );
+      }
+    } catch (err) {
+      onShowNotification('Erro', 'Não foi possível conectar ao servidor de checkout.', 'warning');
+    } finally {
       setIsCheckoutLoading(false);
-      setCheckoutPlan(null);
-
-      onShowNotification(
-        'Stripe Payment Gateway ✅', 
-        `Pagamento processado via Stripe. Assinatura ${plan.toUpperCase()} ativada com sucesso!`, 
-        'success'
-      );
-    }, 1500);
+      setCheckoutPlanId(null);
+    }
   };
 
-  // Helper to resolve monthly cost
-  const getPlanMonthlyPrice = (tierName: string) => {
-    if (tierName === 'Pro Plan' || tierName === 'Pro' || tierName === 'Life4Billion Pro' || tierName === 'Vesta Pro') {
-      if (language.startsWith('pt')) return 59.90;
-      return 11.99;
-    }
-    if (tierName === 'Enterprise') {
-      if (language.startsWith('pt')) return 199.90;
-      return 39.99;
-    }
-    return 0.00;
-  };
+  const isActiveSubscriber = sub?.status === 'active' && sub?.tier_name !== 'Free';
+
+  // Get available plans according to rules:
+  // Do NOT offer Founder plan to active monthly or annual subscribers
+  const allPlans = getPricingPlans(language, founderSpotsRemaining);
+  const availablePlans = isActiveSubscriber
+    ? allPlans.filter(p => p.id !== 'founder')
+    : allPlans;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="subscription-profile-container">
@@ -158,7 +176,6 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
                       reader.onloadend = () => {
                         const base64String = reader.result as string;
                         setAvatar(base64String);
-                        // Save in local storage right away or via form submit
                         LocalDatabase.updateProfile({ avatar_url: base64String });
                         onShowNotification('Avatar Carregado', 'Nova foto de perfil selecionada e armazenada localmente.', 'success');
                       };
@@ -180,7 +197,7 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
 
             <button 
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2.5 rounded-xl transition"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2.5 rounded-xl transition cursor-pointer"
             >
               {t('updateProfileBtn', 'Atualizar Perfil')}
             </button>
@@ -209,31 +226,50 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
             <div className="flex items-center space-x-2 mt-1">
               <Crown className="w-5 h-5 text-amber-400 fill-amber-400/15" />
               <h2 className="text-lg font-bold text-white capitalize">
-                {sub?.tier_name === 'Pro Plan' || (sub?.tier_name as string) === 'Pro' || (sub?.tier_name as string) === 'Life4Billion Pro' || (sub?.tier_name as string) === 'Vesta Pro' ? t('proPlan', 'Plano Pro') : sub?.tier_name || t('freeTrial', 'Avaliação Grátis')}
+                {sub?.tier_name === 'Pro Plan' ? 'Plano Ativo' : sub?.tier_name || 'Plano Básico'}
               </h2>
             </div>
             <p className="text-xs text-slate-400 mt-1 font-medium">
-              {sub?.status === 'active' ? t('accountActiveDesc', 'Sua conta corporativa está ativa e adimplente.') : t('accountTrialDesc', 'Sua conta corporativa está em teste comercial/trial.')}
+              {sub?.status === 'active' 
+                ? (language.startsWith('pt') ? 'Sua assinatura está ativa e conta com garantia de 7 dias de reembolso.' : 'Your subscription is active with a 7-day money-back guarantee.')
+                : (language.startsWith('pt') ? 'Sua conta está ativa. Escolha um plano abaixo para desbloquear todos os recursos.' : 'Select a plan below to unlock all capabilities.')}
             </p>
           </div>
 
           <div className="mt-4 md:mt-0 text-right bg-slate-950/60 p-4 rounded-xl border border-slate-850 flex items-center space-x-4">
             <div>
-              <span className="text-[10px] text-slate-500 block uppercase font-medium">{t('monthlyCycle', 'Ciclo mensal')}</span>
-              <span className="text-emerald-400 font-bold text-lg">{formatCurrency(getPlanMonthlyPrice(sub?.tier_name || ''), language)}</span>
+              <span className="text-[10px] text-slate-500 block uppercase font-medium">Status</span>
+              <span className="text-emerald-400 font-bold text-sm">
+                {sub?.status === 'active' ? 'Ativo' : 'Regular'}
+              </span>
             </div>
             <span className="bg-emerald-950/60 text-emerald-400 text-[10px] border border-emerald-900/30 px-2.5 py-1 rounded-full uppercase font-semibold">
-              {t('activeStatus', 'Ativo')}
+              Garantia 7 Dias
             </span>
           </div>
         </div>
 
-        {/* Escolha de Planos com Stripe */}
+        {/* 7-Day Money Back Guarantee Banner */}
+        <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-3.5 flex items-center space-x-3 text-emerald-300">
+          <ShieldCheck className="w-5 h-5 shrink-0 text-emerald-400" />
+          <div className="text-xs">
+            <strong className="font-black uppercase tracking-wider block">
+              {language.startsWith('pt') ? 'Garantia Incondicional de 7 Dias' : '7-Day 100% Money-Back Guarantee'}
+            </strong>
+            <span className="text-[11px] text-slate-300">
+              {language.startsWith('pt') ? 'Sem período de teste. Cobrança imediata e devolução total de 100% do valor caso solicite em até 7 dias, sem perguntas.' : 'Charged immediately at purchase. 100% refund guaranteed if requested within 7 days.'}
+            </span>
+          </div>
+        </div>
+
+        {/* Escolha de Planos */}
         <div>
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">{t('saasUpgradeOptions', 'Opções de Upgrade do SaaS')}</h3>
-              <p className="text-slate-500 text-xs">{t('saasUpgradeDesc', 'Mude de plano em segundos. Testado pelo simulador de checkout Stripe.')}</p>
+              <h3 className="text-sm font-bold text-white">{t('saasUpgradeOptions', 'Opções de Planos do Life4Billion')}</h3>
+              <p className="text-slate-500 text-xs">
+                {language.startsWith('pt') ? 'Valores e moedas adaptados automaticamente à sua região.' : 'Prices and currencies adapted automatically to your region.'}
+              </p>
             </div>
             <div className="flex items-center space-x-1 text-slate-400 text-xs">
               <Lock className="w-3.5 h-3.5 text-slate-500" />
@@ -241,37 +277,70 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
             </div>
           </div>
 
-          <div className="flex justify-center" id="plans-grid">
-            
-            {/* Pro Plan - ONLY ONE CARD SHOWING */}
-            <div className="border border-indigo-500 p-6 rounded-2xl flex flex-col justify-between transition bg-indigo-950/10 relative overflow-hidden max-w-md w-full shadow-lg shadow-indigo-500/5">
-              <div className="absolute top-3 right-3 bg-indigo-900/50 text-indigo-300 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-indigo-700/50">
-                {t('popularBadge', 'Popular')}
-              </div>
-              <div className="space-y-4">
-                <span className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider bg-indigo-950/40 border border-indigo-900 px-2 py-0.5 rounded-full">{t('professionalTier', 'Profissional')}</span>
-                <div>
-                  <h4 className="text-base font-bold text-white mt-1">Life4Billion Pro</h4>
-                  <p className="text-slate-400 text-xs mt-1">{t('proPlanDesc', 'Ideal para autônomos, investidores e consultórios.')}</p>
-                </div>
-                <div className="text-white text-2xl font-black font-mono">
-                  {formatCurrency(getPlanMonthlyPrice('Pro Plan'), language)} <span className="text-xs text-slate-500 font-sans font-normal">/{language.startsWith('pt') ? 'mês' : language.startsWith('es') ? 'mes' : 'month'}</span>
-                </div>
-                <ul className="text-xs text-slate-300 space-y-2.5 pt-3 border-t border-slate-900">
-                  <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureCrm', 'CRM e Folhas Ilimitadas')}</li>
-                  <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureAlerts', 'Alertas por E-mail')}</li>
-                  <li className="flex items-center"><CheckCircle className="w-4 h-4 mr-2 text-emerald-500 shrink-0" /> {t('featureVip', 'Suporte VIP Prioritário')}</li>
-                </ul>
-              </div>
-              <button 
-                onClick={() => handleSimulateStripeCheckout('pro')}
-                disabled={isCheckoutLoading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl mt-6 transition disabled:opacity-50"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="plans-grid">
+            {availablePlans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`border p-5 rounded-2xl flex flex-col justify-between transition relative overflow-hidden ${
+                  plan.popular
+                    ? 'bg-indigo-950/30 border-indigo-500 shadow-lg shadow-indigo-500/5'
+                    : plan.id === 'founder'
+                    ? 'bg-amber-950/20 border-amber-500/80 shadow-lg shadow-amber-500/5'
+                    : 'bg-slate-900/40 border-slate-800'
+                }`}
               >
-                {isCheckoutLoading && checkoutPlan === 'pro' ? t('processingStripe', 'Processando Stripe...') : sub?.tier_name === 'Pro Plan' || (sub?.tier_name as string) === 'Pro' || (sub?.tier_name as string) === 'Life4Billion Pro' || (sub?.tier_name as string) === 'Vesta Pro' ? t('planActiveBtn', 'Plano Ativo') : t('buyProStripe', 'Comprar Pro via Stripe')}
-              </button>
-            </div>
+                {plan.badge && (
+                  <div className="mb-2">
+                    <span className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                      plan.popular 
+                        ? 'bg-indigo-900/50 text-indigo-300 border-indigo-700/50'
+                        : plan.id === 'founder'
+                        ? 'bg-amber-900/50 text-amber-300 border-amber-700/50'
+                        : 'bg-slate-800 text-slate-400 border-slate-700'
+                    }`}>
+                      {plan.id === 'founder' && <Flame className="w-3 h-3 mr-1 text-amber-400" />}
+                      {plan.badge}
+                    </span>
+                  </div>
+                )}
 
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{plan.name}</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5">{plan.billingDetail}</p>
+                  </div>
+
+                  <div className="text-white text-2xl font-black font-sans">
+                    {plan.priceDisplay} <span className="text-xs text-slate-400 font-normal">{plan.subText}</span>
+                  </div>
+
+                  <ul className="text-xs text-slate-300 space-y-2 pt-2 border-t border-slate-800/80">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start">
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <button 
+                  onClick={() => handlePlanCheckout(plan)}
+                  disabled={isCheckoutLoading}
+                  className={`w-full text-xs font-semibold py-2.5 rounded-xl mt-5 transition disabled:opacity-50 cursor-pointer ${
+                    plan.popular
+                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                      : plan.id === 'founder'
+                      ? 'bg-amber-500 hover:bg-amber-400 text-black font-black'
+                      : 'bg-slate-800 hover:bg-slate-700 text-white'
+                  }`}
+                >
+                  {isCheckoutLoading && checkoutPlanId === plan.id
+                    ? t('processingStripe', 'Processando Stripe...') 
+                    : (language.startsWith('pt') ? 'Selecionar Plano' : 'Select Plan')}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -280,3 +349,4 @@ export default function SubscriptionProfileView({ onShowNotification }: Subscrip
     </div>
   );
 }
+
